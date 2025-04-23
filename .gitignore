@@ -4,6 +4,7 @@
 private/
 .DS_Store
 Procfile
+scratchpad
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
