@@ -1,6 +1,11 @@
 use data_alchemist;
 create schema if not exists cortex;
 
+-- query to get the list of all the packages available in Snowflake
+select * from SNOWFLAKE.INFORMATION_SCHEMA.PACKAGES;
+select * from SNOWFLAKE.INFORMATION_SCHEMA.PACKAGES where package_name = 'snowflake-snowpark-python';
+select distinct runtime_version from SNOWFLAKE.INFORMATION_SCHEMA.PACKAGES order by runtime_version desc;
+
 -- Simple procedure to return a number as string with a '+' sign prepended to it
 create or replace procedure proc1(num float)
   returns string
@@ -91,8 +96,9 @@ FROM TABLE(GENERATOR(ROWCOUNT => 100000));
 
 select x, y, add_2(x, y) from xy;
 
--- Below query even though it is vectorized, will take longer time to run due to the overhead of spinning UDF runtime and load pandas
+-- Below query even though it is using the vectorized function, will take longer time to run due to the overhead of spinning UDF runtime and load pandas
 -- Vectorization pays off for more complex logic
 select x, y, add_v(x, y) from xy;
+
 
 
