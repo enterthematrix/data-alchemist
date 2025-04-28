@@ -7,6 +7,7 @@ session.sql(query).collect()
 query = "CREATE OR REPLACE STAGE DATA_ALCHEMIST.CORTEX.INT_STAGE"
 session.sql(query).collect()
 
+# ============================================================ Titanic dataset ============================================================
 session.file.put(
     "../../data/titanic.csv",
     "DATA_ALCHEMIST.CORTEX.INT_STAGE",
