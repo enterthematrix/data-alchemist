@@ -118,5 +118,57 @@ CALL model_multiclass!SHOW_GLOBAL_EVALUATION_METRICS();
 CALL model_multiclass!SHOW_CONFUSION_MATRIX();
 
 
+-- #################################################### CLASSIFICATION USING BANK DATASET  ####################################################
+-- create the marketing table using the bank dataset @ data/marketing.csv
+
+-- categorize the data into train and infer groups
+
+CREATE OR REPLACE VIEW marketing_view as (
+  SELECT *,
+    CASE WHEN UNIFORM(0::float, 1::float, RANDOM()) < .95
+    THEN 'train' ELSE 'infer' END AS grp
+  FROM marketing);
+
+-- training data view 
+CREATE OR REPLACE VIEW marketing_train AS (
+SELECT * EXCLUDE grp
+FROM marketing_view 
+WHERE grp = 'train');
+
+-- inference data view 
+CREATE OR REPLACE VIEW marketing_infer AS (
+  SELECT * EXCLUDE grp
+  FROM marketing_view 
+  WHERE grp = 'infer');
+
+SELECT count(*) FROM marketing_infer;
+SELECT count(*) FROM marketing_train;
 
 
+-- create and train the binary classification model
+CREATE OR REPLACE snowflake.ml.classification bank_clf(
+    INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'marketing_train'),
+    TARGET_COLNAME => 'Y',
+    CONFIG_OBJECT => {'evaluate': TRUE , 'on_error': 'skip'});
+SHOW snowflake.ml.classification;
+
+-- Get the predictions and save to a table
+
+CREATE OR REPLACE TABLE marketing_preds AS (
+    SELECT Y,
+        preds:class::boolean as pred,
+        preds:probability:False as false_proba,
+        preds:probability:True as true_proba
+    FROM (
+        SELECT bank_clf!PREDICT(object_construct(*)) AS preds, Y
+        FROM marketing_infer));
+
+SELECT *
+FROM marketing_preds
+LIMIT 100;
+
+CALL bank_clf!SHOW_EVALUATION_METRICS();
+
+CALL bank_clf!SHOW_GLOBAL_EVALUATION_METRICS();
+
+CALL bank_clf!SHOW_CONFUSION_MATRIX();
