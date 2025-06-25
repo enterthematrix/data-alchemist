@@ -1,0 +1,6 @@
+dbt-snowflake==1.9.0
+sqlalchemy
+markdown
+pyyaml
+snowflake-sqlalchemy
+streamlit
