@@ -94,3 +94,21 @@ COPY INTO raw_hosts (id, name, is_superhost, created_at, updated_at)
                     FILE_FORMAT = (type = 'CSV' skip_header = 1
                     FIELD_OPTIONALLY_ENCLOSED_BY = '"');
 ```
+
+## Dagster setup
+
+```
+-- Install dependencies:
+
+dbt-snowflake==1.7.1 # dagsater has issues with later version
+dagster-dbt==0.22.0
+dagster-webserver==1.6.0
+
+-- Create Dagster project:
+
+dagster-dbt project scaffold --project-name airbnb_dag --dbt-project-dir=dbtlairbnbearn
+
+-- Run Dagster service
+DAGSTER_DBT_PARSE_PROJECT_ON_LOAD=1 dagster dev
+
+```
