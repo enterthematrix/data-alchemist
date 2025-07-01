@@ -38,4 +38,7 @@ models:
       +materialized: table  # All models in the dim subdirectory will be materialized as tables
     src:
       +materialized: ephemeral  # All models in the src subdirectory will be ephemeral
-    
+
+vars:
+  user_name: data_alchemist  # This variable can be used in your models, macros, and tests
+  test_var: $$$
