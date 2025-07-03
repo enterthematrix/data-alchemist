@@ -106,7 +106,7 @@ dagster-webserver==1.6.0
 
 -- Create Dagster project:
 
-dagster-dbt project scaffold --project-name airbnb_dag --dbt-project-dir=dbtlairbnbearn
+dagster-dbt project scaffold --project-name airbnb_dag --dbt-project-dir=airbnb
 
 -- Run Dagster service
 DAGSTER_DBT_PARSE_PROJECT_ON_LOAD=1 dagster dev
