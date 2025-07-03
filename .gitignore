@@ -5,6 +5,9 @@ private/
 .DS_Store
 Procfile
 scratchpad
+logs/
+tmp*/
+__init__.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
