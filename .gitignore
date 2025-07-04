@@ -8,6 +8,7 @@ scratchpad
 logs/
 tmp*/
 __init__.py
+/data_engineering/dbt/aqi_dag/data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
