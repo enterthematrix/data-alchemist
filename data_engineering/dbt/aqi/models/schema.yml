@@ -1,0 +1,10 @@
+# models/staging/sources.yml
+version: 2
+
+sources:
+  - name: RAW_AQI_DATA
+    description: "Source data for Air Quality Index (AQI) from various locations"
+    database: AQI
+    schema: RAW
+    tables:
+      - name: RAW_AQI_DATA  # name of the snowflake stage, not a table
