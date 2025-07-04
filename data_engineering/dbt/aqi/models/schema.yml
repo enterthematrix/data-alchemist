@@ -5,6 +5,11 @@ sources:
   - name: RAW_AQI_DATA
     description: "Source data for Air Quality Index (AQI) from various locations"
     database: AQI
-    schema: RAW
+    schema: DEV
     tables:
       - name: RAW_AQI_DATA  # name of the snowflake stage, not a table
+        loaded_at_field: record_ts
+        freshness:
+          warn_after: {count: 1, period: hour}
+          error_after: {count: 24, period: hour}
+          # dbt source freshness --select source:RAW_AQI_DATA.RAW_AQI_DATA
