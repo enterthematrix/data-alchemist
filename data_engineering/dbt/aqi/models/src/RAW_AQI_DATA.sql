@@ -12,13 +12,13 @@ WITH raw_data AS (
         metadata$FILE_CONTENT_KEY AS _stg_file_md5,
         CURRENT_TIMESTAMP() AS _copy_data_ts
     FROM @raw.aqi_raw_data_stg (file_format => AQI.RAW.JSON_FILE_FORMAT)
-    {# -- If the file checksum is already present in the target table, skip it
+    -- If the file checksum is already present in the target table, skip it
     -- This is to avoid reprocessing files that have already been loaded
     {% if is_incremental() %}
         WHERE metadata$FILE_CONTENT_KEY NOT IN (
             SELECT DISTINCT _stg_file_md5 FROM {{ this }}
         )
-    {% endif %} #}
+    {% endif %}
 ),
 
 flattened AS (
