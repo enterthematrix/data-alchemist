@@ -49,7 +49,8 @@ SNOWFLAKE_STAGE_PATH = f'@{SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{SNOWFLAKE_STA
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(levelname)s - %(message)s')
 
 # Set the time zone
-ist_timezone = pytz.timezone('Pacific/Auckland')
+ist_timezone = pytz.timezone('Asia/Kolkata')
+#nz_timezone = pytz.timezone('Pacific/Auckland')
 
 # Get the current time in IST
 current_time_ist = datetime.now(ist_timezone)
