@@ -33,5 +33,14 @@ clean-targets:         # directories to be removed by `dbt clean`
 models:
   aqi:
     # Config indicated by + and applies to all files under models/example/
-    example:
-      +materialized: view
+    +materialized: view  # All models in the airbnb package will be materialized as views
+    +post-hook:
+      - "GRANT SELECT ON {{ this }} TO ROLE REPORTER"
+    dim:
+      +materialized: table  # All models in the dim subdirectory will be materialized as tables
+    src:
+      +materialized: ephemeral  # All models in the src subdirectory will be ephemeral
+
+vars:
+  user_name: data_alchemist  # This variable can be used in models, macros, and tests
+  test_var: $$$
