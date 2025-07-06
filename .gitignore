@@ -9,6 +9,7 @@ logs/
 tmp*/
 __init__.py
 /data_engineering/dbt/aqi_dag/data/
+package-lock.yml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
