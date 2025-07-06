@@ -1,6 +1,6 @@
 {{ config(
     materialized='incremental',
-    unique_key=['RECORD_TS', 'STATION']
+    unique_key=['record_pk']
 ) }}
 
 WITH aqi_data AS (
@@ -23,7 +23,7 @@ WITH aqi_data AS (
     GROUP BY RECORD_TS, COUNTRY, STATE, CITY, STATION, LATITUDE, LONGITUDE
 ),
 
-final_imputed AS (
+aqi_data_imputed AS (
     SELECT 
         *,
         COALESCE(
@@ -111,27 +111,49 @@ final_imputed AS (
         ) AS O3_AVG_VALUE
 
     FROM aqi_data
+),
+with_aqi AS (
+    SELECT
+        *,
+        CALCULATE_AQI_UDF(
+            PM10_AVG_VALUE,
+            PM25_AVG_VALUE,
+            SO2_AVG_VALUE,
+            NO2_AVG_VALUE,
+            NH3_AVG_VALUE,
+            CO_AVG_VALUE,
+            O3_AVG_VALUE
+        ) AS AQI
+    FROM aqi_data_imputed
 )
 SELECT
         RECORD_TS,
-        COUNTRY,
-        STATE,
-        CITY,
-        STATION,
-        LATITUDE,
-        LONGITUDE,
+        HASH(RECORD_TS,LATITUDE,LONGITUDE) AS record_pk,
+        HASH(RECORD_TS) AS date_fk,
+        hash(latitude, longitude) as location_fk,
         PM10_AVG_VALUE,
         PM25_AVG_VALUE,
         SO2_AVG_VALUE,
         NO2_AVG_VALUE,
         NH3_AVG_VALUE,
         CO_AVG_VALUE,
-        O3_AVG_VALUE
-FROM final_imputed
+        O3_AVG_VALUE,
+        GET_PROMINENT_POLLUTANT(
+            PM10_AVG_VALUE,
+            PM25_AVG_VALUE,
+            SO2_AVG_VALUE,
+            NO2_AVG_VALUE,
+            NH3_AVG_VALUE,
+            CO_AVG_VALUE,
+            O3_AVG_VALUE
+        ) AS PROMINENT_POLLUTANT,
+        AQI,
+        GET_AQI_CATEGORY(AQI) AS AQI_CATEGORY
+FROM with_aqi
 {% if is_incremental() %}
-WHERE (RECORD_TS, STATION) NOT IN (
-    SELECT RECORD_TS, STATION FROM {{ this }}
+WHERE HASH(RECORD_TS,LATITUDE,LONGITUDE) NOT IN (
+    SELECT record_pk FROM {{ this }}
 )
 {{ log('Loading ' ~ this ~ ' incrementally', info=True)}}
 {% endif %}
-ORDER BY RECORD_TS, STATION
+ORDER BY date_fk desc
