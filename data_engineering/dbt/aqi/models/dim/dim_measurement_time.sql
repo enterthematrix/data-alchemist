@@ -6,7 +6,7 @@
 
 WITH hourly_measurement_time AS (
     SELECT 
-        RECORD_TS AS measurement_time,
+        RECORD_TS,
         YEAR(RECORD_TS) AS aqi_year,
         QUARTER(RECORD_TS) AS aqi_quarter,
         MONTH(RECORD_TS) AS aqi_month,
@@ -17,8 +17,8 @@ WITH hourly_measurement_time AS (
     FROM {{ ref('clean_aqi_data') }} group by RECORD_TS, YEAR(RECORD_TS),  MONTH(RECORD_TS), DAY(RECORD_TS), HOUR(RECORD_TS)
 )
 SELECT
-    HASH(measurement_time) AS date_pk,
-    measurement_time,
+    HASH(RECORD_TS) AS date_pk,
+    RECORD_TS,
     aqi_year,
     aqi_month,
     aqi_day,
@@ -27,9 +27,9 @@ SELECT
     aqi_hour
 FROM hourly_measurement_time
 {% if is_incremental() %}
-WHERE HASH(measurement_time) NOT IN (
+WHERE HASH(RECORD_TS) NOT IN (
     SELECT date_pk FROM {{ this }}
 )
 {{ log('Loading incrementally: ' ~ this, info=True) }}
 {% endif %}
-ORDER BY measurement_time DESC
+ORDER BY RECORD_TS DESC
