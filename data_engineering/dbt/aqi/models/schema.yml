@@ -1,15 +1,46 @@
-# models/staging/sources.yml
 version: 2
 
 sources:
-  - name: RAW_AQI_DATA
-    description: "Source data for Air Quality Index (AQI) from various locations"
+  - name: aqi_source
     database: AQI
     schema: DEV
     tables:
-      - name: RAW_AQI_DATA  # name of the snowflake stage, not a table
+      - name: raw_aqi_data  
+        description: "Raw data for Air Quality Index (AQI) measurements"
         loaded_at_field: record_ts
         freshness:
           warn_after: {count: 1, period: hour}
           error_after: {count: 24, period: hour}
-          # dbt source freshness --select source:RAW_AQI_DATA.RAW_AQI_DATA
+          # dbt source freshness --select source:AQI_SOURCE.RAW_AQI_DATA
+models:
+  - name: clean_aqi_data
+    description: "Cleansed data for Air Quality Index (AQI) from various locations"
+    columns:
+      - name: RECORD_TS
+        description: Timestamp of AQI measurement
+        tests:
+          - not_null
+      - name: STATION
+        description: Name of the AQI monitoring station
+        tests:
+          - not_null
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: ['RECORD_TS', 'STATION']
+
+  - name: dim_locations
+    description: measurement stations dimension table.
+    columns:
+      - name: location_pk
+        description: Primary key for the location
+        tests:
+          - not_null
+          - unique
+  - name: dim_measurement_time
+    description: hourly measurement time dimension table.
+    columns:
+      - name: date_pk
+        description: Primary key for the measurement time
+        tests:
+          - not_null
+          - unique
