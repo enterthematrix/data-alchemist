@@ -4,7 +4,7 @@ import json, yaml
 from datetime import datetime
 import pytz
 from snowflake.snowpark import Session
-from dagster import job, op
+from dagster import job, op, RetryPolicy
 
 # Create the logs directory if it doesn't exist
 os.makedirs('logs', exist_ok=True)
@@ -79,7 +79,9 @@ def snowpark_basic_auth() -> Session:
 
 # Define the Dagster op to get air quality data locally
 # This will be used for local testing and development
-@op
+@op(
+    retry_policy=RetryPolicy(max_retries=3, delay=60)  # retry up to 3 times with 60 sec delay
+)
 def get_air_quality_data_locally():
     # Setup
     aqi_api_key = os.getenv("AQI_API_KEY")
@@ -146,7 +148,9 @@ def get_air_quality_data_locally():
  
 # Define the Dagster op to get air quality data and upload to Snowflake stage
 # This will be used for production runs
-@op
+@op(
+    retry_policy=RetryPolicy(max_retries=3, delay=60)  # retry up to 3 times with 60 sec delay
+)
 def get_air_quality_data():
 
     # Get the API key
