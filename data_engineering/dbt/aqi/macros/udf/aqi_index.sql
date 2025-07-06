@@ -1,14 +1,15 @@
-{% macro calculate_aqi_udf() %}
+{% macro create_calculate_aqi_udf() %}
+{% set sql %}
     CREATE OR REPLACE FUNCTION {{ target.database }}.{{ target.schema }}.calculate_aqi_udf(
         pm25 FLOAT, pm10 FLOAT, no2 FLOAT, so2 FLOAT, co FLOAT, o3 FLOAT, nh3 FLOAT
     )
     RETURNS FLOAT
     LANGUAGE PYTHON
-    RUNTIME_VERSION = '3.8'
-    HANDLER = 'calculate_aqi'
+    RUNTIME_VERSION = '3.11'
+    HANDLER = 'calculate_aqi_udf'
     AS
     $$
-def calculate_aqi(pm25, pm10, no2, so2, co, o3, nh3):
+def calculate_aqi_udf(pm25, pm10, no2, so2, co, o3, nh3):
     breakpoints = {
         "PM2.5": [(0, 30, 0, 50), (31, 60, 51, 100), (61, 90, 101, 200), (91, 120, 201, 300), (121, 250, 301, 400), (251, 500, 401, 500)],
         "PM10": [(0, 50, 0, 50), (51, 100, 51, 100), (101, 250, 101, 200), (251, 350, 201, 300), (351, 430, 301, 400), (431, 600, 401, 500)],
@@ -41,6 +42,8 @@ def calculate_aqi(pm25, pm10, no2, so2, co, o3, nh3):
         if val is not None
     ]
 
-    return max(sub_indices) if sub_indices else None
+    return int(abs(max(sub_indices))) if sub_indices else None
     $$;
+        {% endset %}
+    {% do run_query(sql) %}
 {% endmacro %}

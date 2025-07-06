@@ -1,10 +1,11 @@
-{% macro prominent_pollutant_udf() %}
+{% macro create_prominent_pollutant_udf() %}
+{% set sql %}
     CREATE OR REPLACE FUNCTION {{ target.database }}.{{ target.schema }}.get_prominent_pollutant(
         pm25 FLOAT, pm10 FLOAT, no2 FLOAT, so2 FLOAT, co FLOAT, o3 FLOAT, nh3 FLOAT
     )
     RETURNS STRING
     LANGUAGE PYTHON
-    RUNTIME_VERSION = '3.8'
+    RUNTIME_VERSION = '3.11'
     HANDLER = 'get_prominent_pollutant'
     AS
     $$
@@ -43,4 +44,6 @@ def get_prominent_pollutant(pm25, pm10, no2, so2, co, o3, nh3):
 
     return max(sub_indices, key=sub_indices.get) if sub_indices else None
     $$;
+        {% endset %}
+    {% do run_query(sql) %}
 {% endmacro %}

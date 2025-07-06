@@ -1,9 +1,10 @@
-{% macro aqi_category_udf() %}
+{% macro create_aqi_category_udf() %}
+{% set sql %}
     CREATE OR REPLACE FUNCTION {{ target.database }}.{{ target.schema }}.get_aqi_category(aqi FLOAT)
     RETURNS STRING
     LANGUAGE PYTHON
-    RUNTIME_VERSION = '3.8'
-    HANDLER = 'get_category'
+    RUNTIME_VERSION = '3.11'
+    HANDLER = 'aqi_category'
     AS
     $$
 def aqi_category(aqi):
@@ -24,4 +25,6 @@ def aqi_category(aqi):
     else:
         return "Out of Range"
     $$;
+    {% endset %}
+    {% do run_query(sql) %}
 {% endmacro %}
