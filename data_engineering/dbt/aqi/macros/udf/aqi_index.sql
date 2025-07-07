@@ -37,9 +37,10 @@ def calculate_aqi_udf(pm25, pm10, no2, so2, co, o3, nh3):
     }
 
     sub_indices = [
-        get_subindex(pollutant, val)
-        for pollutant, val in values.items()
+        sub_index for pollutant, val in values.items()
         if val is not None
+        for sub_index in [get_subindex(pollutant, val)]
+        if sub_index is not None
     ]
 
     return int(abs(max(sub_indices))) if sub_indices else None
