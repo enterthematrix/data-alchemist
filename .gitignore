@@ -11,6 +11,7 @@ __init__.py
 # data for AQI project
 /data_engineering/AIRlytics/aqi_dag/data/
 package-lock.yml
+.streamlit/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
