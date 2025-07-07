@@ -1,6 +1,6 @@
 {{ config(
     materialized='incremental',
-    unique_key=['record_pk']
+    unique_key=['RECORD_TS', 'LATITUDE', 'LONGITUDE']
 ) }}
 
 WITH aqi_data AS (
@@ -26,134 +26,37 @@ WITH aqi_data AS (
 aqi_data_imputed AS (
     SELECT 
         *,
-        COALESCE(
-            TRY_TO_NUMBER(PM10_AVG),
-            LAST_VALUE(TRY_TO_NUMBER(PM10_AVG)) IGNORE NULLS OVER (
-                PARTITION BY STATION ORDER BY RECORD_TS
-                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-            ),
-            FIRST_VALUE(TRY_TO_NUMBER(PM10_AVG)) IGNORE NULLS OVER (
-                PARTITION BY STATION ORDER BY RECORD_TS
-                ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING
-            )
-        ) AS PM10_AVG_VALUE,
-
-        COALESCE(
-            TRY_TO_NUMBER(PM25_AVG),
-            LAST_VALUE(TRY_TO_NUMBER(PM25_AVG)) IGNORE NULLS OVER (
-                PARTITION BY STATION ORDER BY RECORD_TS
-                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-            ),
-            FIRST_VALUE(TRY_TO_NUMBER(PM25_AVG)) IGNORE NULLS OVER (
-                PARTITION BY STATION ORDER BY RECORD_TS
-                ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING
-            )
-        ) AS PM25_AVG_VALUE,
-
-        COALESCE(
-            TRY_TO_NUMBER(SO2_AVG),
-            LAST_VALUE(TRY_TO_NUMBER(SO2_AVG)) IGNORE NULLS OVER (
-                PARTITION BY STATION ORDER BY RECORD_TS
-                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-            ),
-            FIRST_VALUE(TRY_TO_NUMBER(SO2_AVG)) IGNORE NULLS OVER (
-                PARTITION BY STATION ORDER BY RECORD_TS
-                ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING
-            )
-        ) AS SO2_AVG_VALUE,
-
-        COALESCE(
-            TRY_TO_NUMBER(NO2_AVG),
-            LAST_VALUE(TRY_TO_NUMBER(NO2_AVG)) IGNORE NULLS OVER (
-                PARTITION BY STATION ORDER BY RECORD_TS
-                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-            ),
-            FIRST_VALUE(TRY_TO_NUMBER(NO2_AVG)) IGNORE NULLS OVER (
-                PARTITION BY STATION ORDER BY RECORD_TS
-                ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING
-            )
-        ) AS NO2_AVG_VALUE,
-
-        COALESCE(
-            TRY_TO_NUMBER(NH3_AVG),
-            LAST_VALUE(TRY_TO_NUMBER(NH3_AVG)) IGNORE NULLS OVER (
-                PARTITION BY STATION ORDER BY RECORD_TS
-                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-            ),
-            FIRST_VALUE(TRY_TO_NUMBER(NH3_AVG)) IGNORE NULLS OVER (
-                PARTITION BY STATION ORDER BY RECORD_TS
-                ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING
-            )
-        ) AS NH3_AVG_VALUE,
-
-        COALESCE(
-            TRY_TO_NUMBER(CO_AVG),
-            LAST_VALUE(TRY_TO_NUMBER(CO_AVG)) IGNORE NULLS OVER (
-                PARTITION BY STATION ORDER BY RECORD_TS
-                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-            ),
-            FIRST_VALUE(TRY_TO_NUMBER(CO_AVG)) IGNORE NULLS OVER (
-                PARTITION BY STATION ORDER BY RECORD_TS
-                ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING
-            )
-        ) AS CO_AVG_VALUE,
-
-        COALESCE(
-            TRY_TO_NUMBER(O3_AVG),
-            LAST_VALUE(TRY_TO_NUMBER(O3_AVG)) IGNORE NULLS OVER (
-                PARTITION BY STATION ORDER BY RECORD_TS
-                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-            ),
-            FIRST_VALUE(TRY_TO_NUMBER(O3_AVG)) IGNORE NULLS OVER (
-                PARTITION BY STATION ORDER BY RECORD_TS
-                ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING
-            )
-        ) AS O3_AVG_VALUE
-
+        -- Impute missing pollutant values using the macro defined in macros/impute_missing_pollutant_values.sql
+        {{ impute_missing_pollutant_values('PM10_AVG') }} AS PM10_AVG_VALUE,
+        {{ impute_missing_pollutant_values('PM25_AVG') }} AS PM25_AVG_VALUE,
+        {{ impute_missing_pollutant_values('SO2_AVG') }} AS SO2_AVG_VALUE,
+        {{ impute_missing_pollutant_values('NO2_AVG') }} AS NO2_AVG_VALUE,
+        {{ impute_missing_pollutant_values('NH3_AVG') }} AS NH3_AVG_VALUE,
+        {{ impute_missing_pollutant_values('CO_AVG') }} AS CO_AVG_VALUE,
+        {{ impute_missing_pollutant_values('O3_AVG') }} AS O3_AVG_VALUE
     FROM aqi_data
-),
-with_aqi AS (
-    SELECT
-        *,
-        CALCULATE_AQI_UDF(
-            PM10_AVG_VALUE,
-            PM25_AVG_VALUE,
-            SO2_AVG_VALUE,
-            NO2_AVG_VALUE,
-            NH3_AVG_VALUE,
-            CO_AVG_VALUE,
-            O3_AVG_VALUE
-        ) AS AQI
-    FROM aqi_data_imputed
 )
 SELECT
         RECORD_TS,
-        HASH(RECORD_TS,LATITUDE,LONGITUDE) AS record_pk,
-        HASH(RECORD_TS) AS date_fk,
-        hash(latitude, longitude) as location_fk,
+        HASH(RECORD_TS, LATITUDE, LONGITUDE) AS record_pk,
+        COUNTRY,
+        STATE,
+        CITY,
+        STATION,
+        LATITUDE,
+        LONGITUDE,
         PM10_AVG_VALUE,
         PM25_AVG_VALUE,
         SO2_AVG_VALUE,
         NO2_AVG_VALUE,
         NH3_AVG_VALUE,
         CO_AVG_VALUE,
-        O3_AVG_VALUE,
-        GET_PROMINENT_POLLUTANT(
-            PM10_AVG_VALUE,
-            PM25_AVG_VALUE,
-            SO2_AVG_VALUE,
-            NO2_AVG_VALUE,
-            NH3_AVG_VALUE,
-            CO_AVG_VALUE,
-            O3_AVG_VALUE
-        ) AS PROMINENT_POLLUTANT,
-        AQI,
-        GET_AQI_CATEGORY(AQI) AS AQI_CATEGORY
-FROM with_aqi
+        O3_AVG_VALUE     
+FROM aqi_data_imputed
 {% if is_incremental() %}
 WHERE HASH(RECORD_TS,LATITUDE,LONGITUDE) NOT IN (
     SELECT record_pk FROM {{ this }}
 )
 {{ log('Loading ' ~ this ~ ' incrementally', info=True)}}
 {% endif %}
-ORDER BY date_fk desc
+ORDER BY RECORD_TS desc
