@@ -11,8 +11,8 @@ WITH hourly_measurement_time AS (
         QUARTER(RECORD_TS) AS aqi_quarter,
         MONTH(RECORD_TS) AS aqi_month,
         DAY(RECORD_TS) AS aqi_day,
-        DAYOFWEEK(measurement_time) AS day_of_week,
-        CASE WHEN DAYOFWEEK(measurement_time) IN (6, 7) THEN TRUE ELSE FALSE END AS is_weekend,
+        DAYOFWEEK(RECORD_TS) AS day_of_week,
+        CASE WHEN DAYOFWEEK(RECORD_TS) IN (6, 7) THEN TRUE ELSE FALSE END AS is_weekend,
         HOUR(RECORD_TS) AS aqi_hour
     FROM {{ ref('clean_aqi_data') }} group by RECORD_TS, YEAR(RECORD_TS),  MONTH(RECORD_TS), DAY(RECORD_TS), HOUR(RECORD_TS)
 )
