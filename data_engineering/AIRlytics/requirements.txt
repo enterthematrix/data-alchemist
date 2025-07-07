@@ -4,3 +4,4 @@ dagster-webserver==1.6.0
 snowflake-connector-python==3.16.0
 snowflake-snowpark-python==1.33.0
 streamlit==1.46.1
+snowflake-sqlalchemy==1.7.5
