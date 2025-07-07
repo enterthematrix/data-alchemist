@@ -20,14 +20,33 @@ models:
         description: Timestamp of AQI measurement
         tests:
           - not_null
-      - name: STATION
-        description: Name of the AQI monitoring station
+      - name: LATITUDE
+        description: Latitude of the measurement station
+        tests:
+          - not_null
+      - name: LONGITUDE
+        description: Longitude of the measurement station
         tests:
           - not_null
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns: ['RECORD_TS', 'STATION']
-
+          combination_of_columns: ['RECORD_TS', 'LATITUDE', 'LONGITUDE']
+  - name: fact_aqi
+    description: "Fact table for Air Quality Index (AQI) measurements"
+    columns:
+      - name: RECORD_PK
+        description: Primary key for the AQI record
+        tests:
+          - not_null
+          - unique
+      - name: DATE_FK
+        description: Foreign key to the measurement time dimension
+        tests:
+          - not_null
+      - name: LOCATION_FK
+        description: Foreign key to the measurement station dimension
+        tests:
+          - not_null
   - name: dim_locations
     description: measurement stations dimension table.
     columns:
