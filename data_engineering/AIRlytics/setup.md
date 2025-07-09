@@ -71,13 +71,10 @@ LIST @aqi_raw_data_stg;
 ```
 
 ## Dagster setup
-
 ```
 -- Install dependencies:
 
-dbt-snowflake==1.7.1 # dagsater has issues with later version
-dagster-dbt==0.22.0
-dagster-webserver==1.6.0
+pip install -r requirements.txt
 
 -- Create Dagster project:
 
@@ -87,3 +84,54 @@ dagster-dbt project scaffold --project-name aqi_dag --dbt-project-dir=aqi
 DAGSTER_DBT_PARSE_PROJECT_ON_LOAD=1 dagster dev
 
 ```
+
+
+## Dagster Setup: Setting up ingest job on a Cloud VM (GCP in this case)
+
+### Pre-Setup
+```
+mkdir ~/.dbt
+# copy dbt project specific config
+sudo vi ~/.dbt/profiles.yml
+
+sudo mkdir /home/sanju/dagster_home
+sudo chown -R sanju:sanju /home/sanju/dagster_home
+chmod -R u+rwX /home/sanju/dagster_home
+touch /home/sanju/dagster_home/dagster.yaml
+pip install "pyarrow<19.0.0"
+#verify Dagster runs
+dagster-daemon run
+```
+### Setup Dagster service file
+vi /etc/systemd/system/dagster-daemon.service
+
+```
+[Unit]
+Description=Dagster Daemon Service
+After=network.target
+
+[Service]
+User=sanju
+WorkingDirectory=/home/sanju/workspace/data-alchemist/data_engineering/AIRlytics/aqi_dag
+
+# Set the environment variables explicitly
+Environment="PATH=/home/sanju/.pyenv/versions/3.11.10/envs/aqi/bin:/home/sanju/.pyenv/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="DAGSTER_HOME=/home/sanju/dagster_home"
+
+ExecStart=/home/sanju/.pyenv/versions/3.11.10/envs/aqi/bin/dagster-daemon run
+Restart=always
+RestartSec=10
+Environment=PYENV_ROOT=/home/sanju/.pyenv
+Environment=PATH=/home/sanju/.pyenv/versions/3.11.10/envs/your_venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```
+sudo systemctl daemon-reexec
+sudo systemctl daemon-reload
+sudo systemctl enable dagster-daemon
+sudo systemctl start dagster-daemon
+sudo systemctl status dagster-daemon
+```  
