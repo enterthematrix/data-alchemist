@@ -1,3 +1,4 @@
+# get clean AQI data
 get_latest_aqi_data = """
         SELECT 
             f.date_fk,
@@ -30,7 +31,7 @@ get_latest_aqi_data = """
     """
 
 
-
+# AQI data aggregated for states
 get_aqi_data_per_state = """
     SELECT 
         YEAR,
