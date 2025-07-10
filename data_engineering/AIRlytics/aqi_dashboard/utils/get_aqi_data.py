@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 #@st.cache_data(ttl=3600, show_spinner="Connecting with Snowflake...")
 def get_engine():
     """Fetches AQI fact data with location and timestamp info."""
-    # Replace with your Snowflake credentials
+    # Get Snowflake engine
     engine = create_engine(
         'snowflake://{user}:{password}@{account}/{database}/{schema}?warehouse={warehouse}'.format(
             user=st.secrets["snowflake"]["user"],
