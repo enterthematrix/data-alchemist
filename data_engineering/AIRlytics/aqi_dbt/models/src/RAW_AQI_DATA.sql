@@ -1,6 +1,7 @@
 {{ config(
     materialized='incremental',
-    unique_key='record_id'
+    unique_key='record_id',
+    post_hook="ALTER TABLE {{ this }} CLUSTER BY LINEAR(station, TO_DATE(record_ts))"
 ) }}
 
 WITH raw_data AS (
