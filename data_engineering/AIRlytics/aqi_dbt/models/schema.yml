@@ -63,3 +63,11 @@ models:
         tests:
           - not_null
           - unique
+  - name: monthly_aqi_state
+    dedescription: monthly AQI per state.
+    columns:
+      - name: RECORD_PK
+        description: Primary key for the measurement time
+        tests:
+          - not_null
+          - unique
