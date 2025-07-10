@@ -123,6 +123,7 @@ Restart=always
 RestartSec=10
 Environment=PYENV_ROOT=/home/sanju/.pyenv
 Environment=PATH=/home/sanju/.pyenv/versions/3.11.10/envs/your_venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment="AQI_API_KEY=<key>"
 
 [Install]
 WantedBy=multi-user.target
