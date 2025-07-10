@@ -9,7 +9,7 @@ geojson_url = "https://raw.githubusercontent.com/india-in-data/india-states-2019
 india_geo = requests.get(geojson_url).json()
 
 # The states are duplicated in geojson data which confuses plotly
-# This function merge duplicate features 
+# This function merge duplicate states 
 def merge_duplicate_features(geojson_obj, key='ST_NM'):
     from collections import defaultdict
     merged = {}
