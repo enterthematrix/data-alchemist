@@ -11,7 +11,8 @@ OUTPUT_DIR = Path("synthetic_data")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Load the reference data
-with gzip.open("../../aqi_dag/data/2025_07_03/air_quality_data_2025_07_03_17_00_03.json.gz", "rt", encoding="utf-8") as f:
+template_data_file = "../../aqi_dag/data/2025_07_03/air_quality_data_2025_07_03_17_00_03.json.gz"
+with gzip.open(template_data_file, "rt", encoding="utf-8") as f:
     real_data = json.load(f)
 
 template_records = real_data["records"]
@@ -57,7 +58,7 @@ def generate_day_records(date: datetime) -> list:
             records.append(record)
     return records
 
-# Accumulate records until we near 250MB compressed
+# Accumulate records until MAX_COMPRESSED_SIZE_MB
 def save_chunk(chunk_index, records):
     out_data = {
         "index_name": real_data["index_name"],
@@ -76,7 +77,7 @@ def save_chunk(chunk_index, records):
     print(f"Saved {file_path} ({size_mb:.2f} MB)")
     return size_mb
 
-# Main loop
+
 start_date = datetime(2024, 1, 1)
 end_date = datetime(2025, 7, 2)
 current_date = start_date
@@ -93,7 +94,7 @@ while current_date <= end_date:
 
     # Generate today's records once
     todays_records = generate_day_records(current_date)
-    print(f"📈 Generated {len(todays_records)} records.")
+    print(f"Generated {len(todays_records)} records.")
 
     # Combine with current buffer
     candidate_records = buffer_records + todays_records
@@ -113,14 +114,14 @@ while current_date <= end_date:
         json.dump(test_data, f)
 
     size_mb = os.path.getsize(test_path) / (1024 * 1024)
-    print(f"💾 Estimated compressed size: {size_mb:.2f} MB")
+    print(f"Estimated compressed size: {size_mb:.2f} MB")
 
     if size_mb < MAX_COMPRESSED_SIZE_MB:
         buffer_records = candidate_records
-        print("📦 Added to current chunk.\n")
+        print("Added to current chunk.\n")
     else:
         # Save current buffer (without today's data)
-        print(f"🚨 Size limit exceeded. Saving chunk {chunk_index}...\n")
+        print(f"Size limit exceeded. Saving chunk {chunk_index}...\n")
         save_chunk(chunk_index, buffer_records)
         chunk_index += 1
 
@@ -131,11 +132,11 @@ while current_date <= end_date:
 
 # Save any remaining buffer
 if buffer_records:
-    print(f"✅ Saving final chunk {chunk_index} with {len(buffer_records)} records.")
+    print(f"Saving final chunk {chunk_index} with {len(buffer_records)} records.")
     save_chunk(chunk_index, buffer_records)
 
 # Delete temp test file
 if test_path.exists():
     os.remove(test_path)
 
-print("\n🎉 All chunks generated successfully.")
+print("\nAll chunks generated successfully.")

@@ -1,5 +1,5 @@
 import pandas as pd
-
+# Map state names from AQI data with state names from GEO JSON data
 state_name_mapping = {
     'Odisha': 'Odisha',
     'Bihar': 'Bihar',
