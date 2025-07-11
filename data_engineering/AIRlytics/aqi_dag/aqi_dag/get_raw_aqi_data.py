@@ -5,6 +5,7 @@ from datetime import datetime
 import pytz
 from snowflake.snowpark import Session
 from dagster import job, op, RetryPolicy
+from aqi_dag.hooks import notify_on_failure
 
 # Create the logs directory if it doesn't exist
 os.makedirs('logs', exist_ok=True)
@@ -235,11 +236,11 @@ def get_air_quality_data():
         sys.exit(1)
 
 # Define the Dagster production job
-@job
+@job(hooks={notify_on_failure})
 def daily_air_quality_job():
     get_air_quality_data()
 
-# Define the Dagster test job
-@job
+# Define the Dagster dev job
+@job(hooks={notify_on_failure})
 def daily_air_quality_job_local():
     get_air_quality_data_locally()
