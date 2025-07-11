@@ -91,7 +91,7 @@ with open("./utils/india_states.geojson", "r") as f:
 
 if tab_selection == "🇮🇳 National View":
     #st.subheader("National Visualizations")
-    st.markdown("<h2 style='text-align: center;'>National Visualizations</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center;'>Air Quality Dashboard</h2>", unsafe_allow_html=True)
 
     
     df_aqi_per_state = run_query(q.get_aqi_data_per_state)
@@ -273,7 +273,7 @@ if tab_selection == "🇮🇳 National View":
     col = st.columns((4, 4, 4), gap='medium')
 
     with col[0]:
-        st.markdown("#### Top 5 Improved/Worsened ")
+        st.markdown("#### Top 5: AQI Winners & Losers")
         df_aqi_diff = compute_monthly_aqi_change(df_aqi_per_state)
 
         # Filter for selected month and year only
@@ -301,7 +301,7 @@ if tab_selection == "🇮🇳 National View":
          with st.expander('About', expanded=True):
             st.write('''
                 - Data: [data.gov.in](https://www.data.gov.in/resource/real-time-air-quality-index-various-locations).
-                - :orange[**Top 5**]: Top 5 states with highest/lowest AQI % change compared to previous month
+                - :orange[**AQI Winners & Losers**]: Top 5 states with highest/lowest AQI % change compared to previous month
                 - :orange[** AQI Distribution **]:  AQI category distribution across all states
                 - :orange[** Top Polluted States **]:  States ranked from worst to best based on AQI 
                 ''')
