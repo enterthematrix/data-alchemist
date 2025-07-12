@@ -1,0 +1,10 @@
+dbt-snowflake==1.7.1 # 1.7.1 in order to make dagsater work
+dagster-dbt==0.22.0
+dagster-webserver==1.6.0
+snowflake-connector-python==3.16.0
+snowflake-snowpark-python==1.33.0
+streamlit==1.46.1
+snowflake-sqlalchemy==1.7.5
+pandas==2.3.0
+altair==5.5.0
+plotly==6.2.0
