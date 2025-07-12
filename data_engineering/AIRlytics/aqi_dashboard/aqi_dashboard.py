@@ -1,5 +1,6 @@
 #######################
 # Import libraries
+import os
 import streamlit as st
 import pandas as pd
 import altair as alt
@@ -84,6 +85,8 @@ tab_selection = st.sidebar.radio(
 
 # Load GeoJSON
 with open("./utils/india_states.geojson", "r") as f:
+    print("Current working directory:", os.getcwd())
+    print("Files in cwd:", os.listdir("."))
     india_geo = json.load(f)
 
 #######################
