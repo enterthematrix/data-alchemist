@@ -83,10 +83,10 @@ tab_selection = st.sidebar.radio(
     ["🇮🇳 National View", "🗺️ State-Level View", "🏙️ City-Level View", "🌫️ Pollutant Analysis"]
 )
 
+print("Current working directory:", os.getcwd())
+print("Files in cwd:", os.listdir("."))
 # Load GeoJSON
 with open("./utils/india_states.geojson", "r") as f:
-    print("Current working directory:", os.getcwd())
-    print("Files in cwd:", os.listdir("."))
     india_geo = json.load(f)
 
 #######################
