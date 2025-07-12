@@ -293,9 +293,10 @@ if tab_selection == "🇮🇳 National View":
 
     with col[1]:
          st.markdown("<h4 style='text-align: center;'>AQI Distibution(state)</h4>", unsafe_allow_html=True)
-         df_selected_year = df_aqi_per_state[df_aqi_per_state["year"] == selected_year].copy()
+         #df_selected_year = df_aqi_per_state[df_aqi_per_state["year"] == selected_year].copy()
+         df_selected_year_month = df_monthly_aqi_per_state.copy()
          
-         aqi_pie_chart = aqi_distribution_pie_chart(compute_aqi_distribution(df_selected_year))
+         aqi_pie_chart = aqi_distribution_pie_chart(compute_aqi_distribution(df_selected_year_month))
          st.altair_chart(aqi_pie_chart, use_container_width=True)
 
          with st.expander('About', expanded=True):
@@ -310,7 +311,7 @@ if tab_selection == "🇮🇳 National View":
     with col[2]:
         st.markdown("<h4 style='text-align: center;'>Top Polluted States</h4>", unsafe_allow_html=True)
         df_monthly_aqi_per_state = df_monthly_aqi_per_state.copy()
-        df_monthly_aqi_per_state["Air Quality"] = df_monthly_aqi_per_state["aqi_category"].map(
+        df_monthly_aqi_per_state["AQI Level"] = df_monthly_aqi_per_state["aqi_category"].map(
             lambda cat: f"{aqi_colors_labels.get(cat, '')} {cat}"
         )
 
@@ -329,7 +330,7 @@ if tab_selection == "🇮🇳 National View":
                             max_value=max(df_aqi_per_state.aqi),
                         ),
                         "aqi_category": st.column_config.TextColumn(
-                            "AQI Category",
+                            "AQI Quality",
                         )}
                     )
 
