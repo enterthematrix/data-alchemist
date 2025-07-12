@@ -7,6 +7,7 @@ from snowflake.snowpark import Session
 from dagster import job, op, RetryPolicy
 from aqi_dag.hooks import notify_on_failure
 
+
 # Create the logs directory if it doesn't exist
 os.makedirs('logs', exist_ok=True)
 log_filename = f"logs/aqi_ingest.log"
@@ -83,7 +84,7 @@ def snowpark_basic_auth() -> Session:
 @op(
     retry_policy=RetryPolicy(max_retries=3, delay=60)  # retry up to 3 times with 60 sec delay
 )
-def get_air_quality_data_locally():
+def hourly_ingest_to_local():
     # Setup
     aqi_api_key = os.getenv("AQI_API_KEY")
     limit_value = 4000
@@ -152,7 +153,7 @@ def get_air_quality_data_locally():
 @op(
     retry_policy=RetryPolicy(max_retries=3, delay=60)  # retry up to 3 times with 60 sec delay
 )
-def get_air_quality_data():
+def hourly_ingest_to_snowflake():
 
     # Get the API key
     aqi_api_key = os.getenv("AQI_API_KEY")
@@ -237,10 +238,10 @@ def get_air_quality_data():
 
 # Define the Dagster production job
 @job(hooks={notify_on_failure})
-def daily_air_quality_job():
-    get_air_quality_data()
+def hourly_ingest_snowflake():
+    hourly_ingest_to_snowflake()
 
 # Define the Dagster dev job
 @job(hooks={notify_on_failure})
-def daily_air_quality_job_local():
-    get_air_quality_data_locally()
+def hourly_ingest_local():
+    hourly_ingest_to_local()
