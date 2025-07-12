@@ -3,7 +3,7 @@ from dagster import HookContext, failure_hook
 import smtplib
 from email.mime.text import MIMEText
 
-# Your email config
+
 GMAIL_USER = os.getenv("GMAIL_USER")
 GMAIL_AQI_PASSWORD = os.getenv("GMAIL_AQI_PASSWORD")
 TO_EMAIL = os.getenv("TO_EMAIL")

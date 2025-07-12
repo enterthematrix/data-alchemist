@@ -5,7 +5,7 @@ from datetime import datetime
 import pytz
 from snowflake.snowpark import Session
 from dagster import job, op, RetryPolicy
-from aqi_dag.hooks import notify_on_failure
+from .hooks import notify_on_failure
 
 
 # Create the logs directory if it doesn't exist

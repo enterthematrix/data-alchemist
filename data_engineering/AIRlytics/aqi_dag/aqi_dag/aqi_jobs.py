@@ -1,6 +1,6 @@
 from dagster import job
-from aqi_dag.get_raw_aqi_data import hourly_ingest_to_local, hourly_ingest_to_snowflake
-from aqi_dag.hooks import notify_on_failure
+from .get_raw_aqi_data import hourly_ingest_to_local, hourly_ingest_to_snowflake
+from .hooks import notify_on_failure
 
 @job(hooks={notify_on_failure})
 def hourly_ingest_local():
