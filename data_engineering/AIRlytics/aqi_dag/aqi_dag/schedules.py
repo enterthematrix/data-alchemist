@@ -1,14 +1,17 @@
 from dagster import ScheduleDefinition
-from aqi_dag.get_raw_aqi_data import daily_air_quality_job,daily_air_quality_job_local
+from aqi_dag.get_raw_aqi_data import hourly_ingest_local
+from aqi_dag.get_raw_aqi_data import hourly_ingest_snowflake
 
-daily_air_quality_schedule_local = ScheduleDefinition(
-    job=daily_air_quality_job_local,
+
+
+hourly_aqi_schedule_local = ScheduleDefinition(
+    job=hourly_ingest_local,
     cron_schedule="0 * * * *",  # Every hour at the top of the hour
     name="daily_air_quality_schedule_local"
 )
 
-daily_air_quality_schedule = ScheduleDefinition(
-    job=daily_air_quality_job,
+hourly_aqi_schedule_snowflake = ScheduleDefinition(
+    job=hourly_ingest_snowflake,
     cron_schedule="0 * * * *",  # Every hour at the top of the hour
     name="daily_air_quality_schedule"
 )
