@@ -1,14 +1,15 @@
 from dagster import Definitions
-from aqi_dag.get_raw_aqi_data import daily_air_quality_job, daily_air_quality_job_local
-from aqi_dag.schedules import daily_air_quality_schedule, daily_air_quality_schedule_local
+from aqi_dag.get_raw_aqi_data import hourly_ingest_local, hourly_ingest_snowflake
+from aqi_dag.schedules import hourly_aqi_schedule_local, hourly_aqi_schedule_snowflake
+
 
 defs = Definitions(
     jobs=[
-        daily_air_quality_job,
-        daily_air_quality_job_local,
-    ],
+        hourly_ingest_local, 
+        hourly_ingest_snowflake
+        ],
     schedules=[
-        daily_air_quality_schedule,
-        daily_air_quality_schedule_local,
-    ],
+        hourly_aqi_schedule_local, 
+        hourly_aqi_schedule_snowflake
+        ],
 )
