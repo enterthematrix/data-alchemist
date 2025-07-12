@@ -135,4 +135,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable dagster-daemon
 sudo systemctl start dagster-daemon
 sudo systemctl status dagster-daemon
+sudo systemctl show dagster-daemon.service --property=Environment
+
+nohup bash -c 'DAGSTER_DBT_PARSE_PROJECT_ON_LOAD=1 dagster dev' >  2>&1
 ```  
