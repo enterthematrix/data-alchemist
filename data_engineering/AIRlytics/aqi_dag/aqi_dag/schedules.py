@@ -1,6 +1,5 @@
 from dagster import ScheduleDefinition
-from aqi_dag.get_raw_aqi_data import hourly_ingest_local
-from aqi_dag.get_raw_aqi_data import hourly_ingest_snowflake
+from aqi_dag.aqi_jobs import hourly_ingest_local, hourly_ingest_snowflake
 
 
 
