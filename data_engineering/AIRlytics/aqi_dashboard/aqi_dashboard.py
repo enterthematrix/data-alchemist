@@ -85,6 +85,7 @@ tab_selection = st.sidebar.radio(
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 geojson_path = os.path.join(base_dir, "utils", "india_states.geojson")
+st.write(f"Resolved path: {geojson_path}")
 # Load GeoJSON
 with open(geojson_path, "r") as f:
     india_geo = json.load(f)
