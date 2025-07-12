@@ -37,6 +37,14 @@ aqi_colors_labels = {
     "Very Poor": "🔴",
     "Severe": "🟣"
 }
+pollutant_colors = {
+        'pm25_avg': '#8c564b',
+        'pm10_avg': '#e377c2',
+        'so2_avg': '#1f77b4',
+        'no2_avg': '#ff7f0e',
+        'o3_avg': '#2ca02c',
+        'co_avg': '#d62728'
+    }
 
 #######################
 # CSS styling
@@ -74,6 +82,12 @@ def compute_aqi_distribution(df):
     )
     return category_counts
 
+def get_month_mappings(valid_months):
+    """Returns month name list and lookup dictionaries."""
+    month_map = {i: calendar.month_name[i] for i in valid_months}
+    display_months = [month_map[m] for m in valid_months]
+    month_lookup = {v: k for k, v in month_map.items()}
+    return display_months, month_lookup
 
 #######################
 # Sidebar tab navigation
@@ -83,28 +97,32 @@ tab_selection = st.sidebar.radio(
     ["🇮🇳 National View", "🗺️ State-Level View", "🏙️ City-Level View", "🌫️ Pollutant Analysis"]
 )
 
+#######################
+## Data-prep
+
 base_dir = os.path.dirname(os.path.abspath(__file__))
 geojson_path = os.path.join(base_dir, "utils", "india_states.geojson")
-print(f"Resolved path: {geojson_path}")
 # Load GeoJSON
 with open(geojson_path, "r") as f:
     india_geo = json.load(f)
+
+df_aqi_per_state = run_query(q.get_aqi_data_per_state)
+# map state names to what geojson expects
+df_aqi_per_state = map_state_names(df_aqi_per_state)
+
+df_aqi_data = run_query(q.get_latest_aqi_data)
+latest_ts = df_aqi_data['record_ts'].max()
+
 
 #######################
 # Tab 1: National View
 
 if tab_selection == "🇮🇳 National View":
+    st.subheader("Air Quality Dashboard")
+    aqi_dashboard_subtab = st.radio("Choose a sub-section", ["Overview", "Trends", "Comparisons", "Maps", "Anomalies"], horizontal=True)
+
     #st.subheader("National Visualizations")
     st.markdown("<h2 style='text-align: center;'>Air Quality Dashboard</h2>", unsafe_allow_html=True)
-
-    
-    df_aqi_per_state = run_query(q.get_aqi_data_per_state)
-    # map state names to what geojson expects
-    df_aqi_per_state = map_state_names(df_aqi_per_state)
-
-    df_aqi_data = run_query(q.get_latest_aqi_data)
-    latest_ts = df_aqi_data['record_ts'].max()
-
     # selected year
     current_year = df_aqi_per_state["year"].max()
     year_list = sorted(df_aqi_per_state["year"].unique().tolist(), reverse=True)
@@ -126,12 +144,12 @@ if tab_selection == "🇮🇳 National View":
     # Filter the data
     df_monthly_aqi_per_state = get_filtered_monthly_data(df_aqi_per_state, selected_year, selected_month)
     df_yearly_aqi_per_state = get_filtered_yearly_data(df_aqi_per_state, selected_year)
-    
+
     color_theme_list = ['blues', 'cividis', 'greens', 'inferno', 'magma', 'plasma', 'reds', 'rainbow', 'turbo', 'viridis']
     selected_color_theme = st.sidebar.selectbox("Select a color theme", color_theme_list)
 
 
-    def make_choropleth_india(input_df, input_color_theme, selected_month):
+    def make_choropleth_india(input_df):
         choropleth = px.choropleth(
             input_df,
             geojson=india_geo,
@@ -139,14 +157,12 @@ if tab_selection == "🇮🇳 National View":
             featureidkey="properties.ST_NM",
             color="aqi_category",
             color_discrete_map=aqi_colors,
-            hover_name="state",  # optional, shows as title in tooltip
+            hover_name="state",  
             hover_data={
                 "aqi": True,
                 "aqi_category": True,
-                "state_for_map": False  # hide internal ID
+                "state_for_map": False  
             }
-            #color_continuous_scale=input_color_theme,
-            #range_color=(0, input_df[input_df.month == selected_month]["aqi"].max()),
             
         )
         
@@ -161,7 +177,6 @@ if tab_selection == "🇮🇳 National View":
             height=700
 
         )
-        #choropleth.update_layout(margin={"r":0, "t":0, "l":0, "b":0})
         return choropleth
 
     def make_heatmap(input_df, input_y, input_x, input_color, input_color_theme):
@@ -259,7 +274,9 @@ if tab_selection == "🇮🇳 National View":
             height=350
         )
         return donut_chart
-        
+
+    if aqi_dashboard_subtab == "Overview":
+        make_choropleth_india(df_monthly_aqi_per_state)    
     #######################
     # Dashboard Main Panel
     top_col = st.columns([14])[0]  # or just use st.container()
@@ -267,7 +284,7 @@ if tab_selection == "🇮🇳 National View":
         st.markdown("<h4 style='text-align: center;'>AQI Map of India </h4>", unsafe_allow_html=True)
         st.markdown(f"<p style='text-align: center; font-size: 0.9rem; color: grey;'>Last updated: {latest_ts}</p>", unsafe_allow_html=True)
 
-        choropleth = make_choropleth_india(df_monthly_aqi_per_state, selected_color_theme, selected_month)
+        choropleth = make_choropleth_india(df_monthly_aqi_per_state)
         # st.plotly_chart(choropleth, use_container_width=True)
         st.plotly_chart(choropleth)
         
@@ -363,7 +380,52 @@ elif tab_selection == "🏙️ City-Level View":
 
 elif tab_selection == "🌫️ Pollutant Analysis":
     st.subheader("Coming soon...Pollutant-Level Analysis")
-    selected_year = st.sidebar.selectbox("Select Year", ...)
-    selected_month = st.sidebar.selectbox("Select Month", ...)
-    selected_state = st.sidebar.selectbox("Select State", ...)
-    selected_city = st.sidebar.selectbox("Select City", ...)
+    pollutant_subtab = st.radio("Choose a sub-section", ["Overview", "Trends", "Comparisons", "Maps", "Anomalies"], horizontal=True)
+
+    def show_pollutant_composition_chart(df):
+        st.subheader("Pollutant Composition by State")
+
+        available_years = sorted(df['year'].unique())
+        selected_year = st.selectbox("Select Year", available_years, index=len(available_years)-1)
+
+        available_months = sorted(df[df['year'] == selected_year]['month'].dropna().unique())
+        # Get month mappings
+        display_months, month_lookup = get_month_mappings(available_months)
+        display_months = ['All'] + display_months
+
+        selected_month_name = st.selectbox("Select Month", display_months)
+        selected_month = None if selected_month_name == 'All' else month_lookup[selected_month_name]
+
+        df_year = df[df['year'] == selected_year].copy()
+        if selected_month is not None:
+            df_year = df_year[df_year['month'] == selected_month]
+
+        
+        pollutant_cols = ['pm25_avg', 'pm10_avg', 'so2_avg', 'no2_avg', 'o3_avg', 'co_avg']
+        df_melted = df_year.melt(
+            id_vars='state',
+            value_vars=pollutant_cols,
+            var_name='pollutant',
+            value_name='avg_value'
+        )
+
+        title_suffix = f"{selected_year}" if selected_month == 'All' else f"{selected_month_name}-{selected_year}"
+        chart = alt.Chart(df_melted).mark_bar().encode(
+            x=alt.X('state:N', sort='-y', title='State'),
+            y=alt.Y('avg_value:Q', stack='normalize', title='Pollutants Composition'),
+            color=alt.Color('pollutant:N',
+                            scale=alt.Scale(domain=list(pollutant_colors.keys()),
+                                            range=list(pollutant_colors.values())),
+                            title='Pollutant'),
+            tooltip=['state:N', 'pollutant:N', 'avg_value:Q']
+        ).properties(
+            width=800,
+            height=500,
+            title=f"Pollutant Composition by State - {title_suffix}"
+        )
+
+        st.altair_chart(chart, use_container_width=True)
+
+    if pollutant_subtab == "Overview":
+        show_pollutant_composition_chart(df_aqi_per_state)
+    
