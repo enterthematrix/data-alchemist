@@ -26,14 +26,19 @@ aqi_colors_labels = {
     "Severe": "🟣"
 }
 pollutant_colors = {
-        'pm25_avg': '#8c564b',
-        'pm10_avg': '#e377c2',
-        'so2_avg': '#1f77b4',
-        'no2_avg': '#ff7f0e',
-        'o3_avg': '#2ca02c',
-        'co_avg': '#d62728'
-    }
-
+    'pm25_avg': '#8c564b',
+    'pm10_avg': '#e377c2',
+    'so2_avg': '#1f77b4',
+    'no2_avg': '#ff7f0e',
+    'o3_avg': '#2ca02c',
+    'co_avg': '#d62728',
+    'nh3_avg': '#9467bd'  
+}
+# pollutant names
+pollutant_cols = ['pm25_avg', 'pm10_avg', 'so2_avg', 'no2_avg', 'o3_avg', 'co_avg',"nh3_avg"]
+# pollutant groups
+particulate = ["pm25_avg", "pm10_avg"]
+gaseous = ["so2_avg", "no2_avg", "o3_avg", "co_avg", "nh3_avg"]
 #######################
 # Data-prep
 
@@ -91,27 +96,14 @@ def get_month_mappings(valid_months):
     return display_months, month_lookup
 
 
-def show_pollutant_composition_chart(df):
-        st.subheader("Pollutant Composition by State")
-
-        available_years = sorted(df['year'].unique())
-        selected_year = st.selectbox("Select Year", available_years, index=len(available_years)-1)
-
-        available_months = sorted(df[df['year'] == selected_year]['month'].dropna().unique(), reverse=True)
-        # Get month mappings
-        display_months, month_lookup = get_month_mappings(available_months)
-        display_months = ['All'] + display_months
-
-        selected_month_name = st.selectbox("Select Month", display_months)
-        selected_month = None if selected_month_name == 'All' else month_lookup[selected_month_name]
-
-        df_year = df[df['year'] == selected_year].copy()
+def show_pollutant_composition_chart(df,selected_year,selected_month,selected_month_name):
+        # st.subheader("Pollutant Composition by State")
+        df_selected = df[df['year'] == selected_year].copy()
         if selected_month is not None:
-            df_year = df_year[df_year['month'] == selected_month]
+            df_selected = df_selected[df_selected['month'] == selected_month]
 
         
-        pollutant_cols = ['pm25_avg', 'pm10_avg', 'so2_avg', 'no2_avg', 'o3_avg', 'co_avg']
-        df_melted = df_year.melt(
+        df_melted = df_selected.melt(
             id_vars='state',
             value_vars=pollutant_cols,
             var_name='pollutant',
@@ -148,9 +140,9 @@ def make_heatmap(df):
     selected_month_name = st.selectbox("Select Month", display_months)
     selected_month = None if selected_month_name == 'All' else month_lookup[selected_month_name]
 
-    df_heatmap = df[df['year'] == selected_year].copy()
+    df_selected = df[df['year'] == selected_year].copy()
     if selected_month is not None:
-        df_heatmap = df_heatmap[df_heatmap['month'] == selected_month]
+        df_selected = df_selected[df_selected['month'] == selected_month]
 
     title_suffix = f"{selected_year}" if selected_month == 'All' else f"{selected_month_name}-{selected_year}"
     st.subheader(f"AQI Heatmap: {title_suffix}")
@@ -160,19 +152,19 @@ def make_heatmap(df):
     input_color = 'aqi'
 
     # Keep numeric month for sorting
-    df_heatmap['month_num'] = df_heatmap['month']
-    df_heatmap['month'] = df_heatmap['month'].apply(lambda x: calendar.month_abbr[int(x)])
+    df_selected['month_num'] = df_selected['month']
+    df_selected['month'] = df_selected['month'].apply(lambda x: calendar.month_abbr[int(x)])
 
     # Create display column for AQI values
-    df_heatmap['aqi_display'] = df_heatmap[input_color].apply(
+    df_selected['aqi_display'] = df_selected[input_color].apply(
         lambda x: 'NA' if pd.isna(x) else str(int(x))
     )
 
     # Base heatmap
-    heatmap = alt.Chart(df_heatmap).mark_rect().encode(
+    heatmap = alt.Chart(df_selected).mark_rect().encode(
         y=alt.Y(f'{input_y}:O',
                 sort=alt.EncodingSortField(field='month_num', order='descending'),
-                axis=alt.Axis(title=f"{df_heatmap['year'].max()}", titleFontSize=18, titlePadding=15, titleFontWeight=900, labelAngle=0)),
+                axis=alt.Axis(title=f"{df_selected['year'].max()}", titleFontSize=18, titlePadding=15, titleFontWeight=900, labelAngle=0)),
         x=alt.X(f'{input_x}:O',
                 sort=alt.EncodingSortField(field=input_color, op='max', order='descending'),
                 axis=alt.Axis(title="States", titleFontSize=18, titlePadding=15, titleFontWeight=900)),
@@ -189,7 +181,7 @@ def make_heatmap(df):
         ]
     )
     # Text labels
-    text = alt.Chart(df_heatmap).mark_text(
+    text = alt.Chart(df_selected).mark_text(
         baseline='middle',
         fontSize=12,
         fontWeight='bold'
@@ -319,7 +311,6 @@ def aqi_leaderboard(df):
     df_selected["AQI Level"] = df_selected["aqi_category"].map(
         lambda cat: f"{aqi_colors_labels.get(cat, '')} {cat}"
     )
-    
     title_suffix = f"{selected_year}" if selected_month == 'All' else f"{selected_month_name}-{selected_year}"
     st.subheader(f"AQI Map: {title_suffix}")
     st.dataframe(df_selected,
@@ -341,7 +332,75 @@ def aqi_leaderboard(df):
                     )}
                 )
 
-def trends():
+def national_pollutant_averages(df, selected_year, selected_month):
+    df_selected = df[df['year'] == selected_year].copy()
+    if selected_month is not None:
+        df_selected = df_selected[df_selected['month'] == selected_month]
+    avg_values = df_selected[pollutant_cols].mean().reset_index()
+    avg_values.columns = ["pollutant", "average"]
+    avg_values["pollutant"] = avg_values["pollutant"].str.upper().str.replace("_AVG", "")
+
+    with st.expander("National Average Pollutant Levels"):
+        chart = alt.Chart(avg_values).mark_bar(size=35).encode(
+            x=alt.X("pollutant:N", title="Pollutant", sort=None),
+            y=alt.Y("average:Q", title="Average Level"),
+            color=alt.Color("pollutant:N", legend=None),
+            tooltip=["pollutant", "average"]
+        ).properties(
+            width=600,
+            height=350,
+            title="Average Pollutant Levels Across India"
+        )
+
+    st.altair_chart(chart, use_container_width=True)
+    
+def particulate_vs_gaseous(df, selected_year, selected_month):
+    df_selected = df[df['year'] == selected_year].copy()
+    if selected_month is not None:
+        df_selected = df_selected[df_selected['month'] == selected_month]
+    part_avg = df[particulate].sum(axis=1).mean()
+    gas_avg = df[gaseous].sum(axis=1).mean()
+    particulate_vs_gaseous = pd.DataFrame({
+        "Pollutant Category": ["Particulate Matter", "Gaseous Pollutants"],
+        "Average Level": [part_avg, gas_avg]
+    })
+
+    with st.expander("Particulate vs Gaseous Contribution"):
+        pie_chart = alt.Chart(particulate_vs_gaseous).mark_arc(innerRadius=60).encode(
+            theta="Average Level:Q",
+            color="Pollutant Category:N",
+            tooltip=["Pollutant Category", "Average Level"]
+        ).properties(
+            width=500,
+            height=400,
+            title="Contribution by Pollutant Category"
+        )
+
+    st.altair_chart(pie_chart, use_container_width=True)
+
+def prominent_pollutant_distribution(df,selected_year,selected_month,selected_month_name):
+    df_selected = df[df['year'] == selected_year].copy()
+    if selected_month is not None:
+        df_selected = df_selected[df_selected['month'] == selected_month]
+
+    title_suffix = f"{selected_year}" if selected_month == 'All' else f"{selected_month_name}-{selected_year}"
+    # st.subheader(f"Prominent Pollutant: {title_suffix}")
+    # Count frequency of each prominent pollutant
+    pollutant_counts = df_selected['prominent_pollutant'].value_counts().reset_index()
+    pollutant_counts.columns = ['pollutant', 'count']
+
+    fig = px.pie(
+        pollutant_counts,
+        hole=0.4,
+        names='pollutant',
+        values='count',
+        title='Distribution of Prominent Pollutants Across States',
+        color_discrete_sequence=px.colors.qualitative.Set3
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+    
+def aqi_trends():
     col = st.columns((4, 4, 4), gap='medium')
     with col[0]:
         plot_aqi_change_bar(df_aqi_agg_state)
@@ -349,7 +408,30 @@ def trends():
         aqi_distribution_pie_chart(df_aqi_agg_state)
     with col[2]:
         aqi_leaderboard(df_aqi_agg_state)
-    
+
+def pollutants_overview():
+    top_col = st.columns([14])[0]
+    with top_col:
+        df = df_aqi_agg_state.copy()
+        available_years = sorted(df['year'].unique())
+        selected_year = st.selectbox("Select Year", available_years, index=len(available_years)-1)
+
+        available_months = sorted(df[df['year'] == selected_year]['month'].dropna().unique(), reverse=True)
+        # Get month mappings
+        display_months, month_lookup = get_month_mappings(available_months)
+        display_months = ['All'] + display_months
+
+        selected_month_name = st.selectbox("Select Month", display_months)
+        selected_month = None if selected_month_name == 'All' else month_lookup[selected_month_name]
+        show_pollutant_composition_chart(df_aqi_agg_state,selected_year,selected_month,selected_month_name)
+    col = st.columns((4, 4, 4), gap='medium')
+    with col[0]:
+        prominent_pollutant_distribution(df_aqi_agg_state,selected_year,selected_month,selected_month_name)
+    with col[1]:
+        national_pollutant_averages(df_aqi_agg_state, selected_year, selected_month)
+    with col[2]:
+        particulate_vs_gaseous(df_aqi_agg_state, selected_year, selected_month)
+
 
 
 def make_choropleth_india(df):

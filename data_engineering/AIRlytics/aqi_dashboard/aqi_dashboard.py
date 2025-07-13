@@ -52,7 +52,7 @@ if tab_selection == "🇮🇳 AQI Dashboard":
                     - :orange[**AQI Heatmap**]: Yearly / Monthly AQI measurements across all states
                     ''')
     elif aqi_dashboard_subtab == "Trends":
-        trends()
+        aqi_trends()
         with st.expander('About', expanded=True):
             st.write('''
                     - :orange[**AQI Winners & Losers**]: Top 5 states with highest/lowest AQI % change compared to previous month
@@ -64,9 +64,9 @@ if tab_selection == "🇮🇳 AQI Dashboard":
 # Tab 2: Pollutant Analysis
 
 elif tab_selection == "🌫️ Pollutant Analysis":
-    st.subheader("Coming soon...Pollutant-Level Analysis")
+    st.subheader("Pollutant-Level Analysis")
     pollutant_subtab = st.radio("Choose a sub-section", ["Overview", "Trends", "Comparisons", "Maps", "Anomalies"], horizontal=True)
 
     if pollutant_subtab == "Overview":
-        show_pollutant_composition_chart(df_aqi_agg_state)
+        pollutants_overview()
     

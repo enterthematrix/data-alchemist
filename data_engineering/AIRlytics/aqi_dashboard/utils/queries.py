@@ -44,6 +44,7 @@ get_aqi_data_per_state = """
         NO2_AVG, 
         O3_AVG, 
         CO_AVG, 
+        NH3_AVG,
         PROMINENT_POLLUTANT, 
         AQI_CATEGORY
     FROM AQI.DEV.MONTHLY_AQI_STATE 
