@@ -374,6 +374,11 @@ def aqi_leaderboard(df):
     df_selected = df[df['year'] == selected_year].copy()
     if selected_month is not None:
         df_selected = df_selected[df_selected['month'] == selected_month]
+    else:
+        df_selected = df_selected.groupby("state_for_map", as_index=False).agg({
+            "aqi": "mean",
+            "aqi_category": lambda x: x.mode().iloc[0] if not x.mode().empty else None
+        })
 
     df_selected["AQI Level"] = df_selected["aqi_category"].map(
         lambda cat: f"{aqi_colors_labels.get(cat, '')} {cat}"
