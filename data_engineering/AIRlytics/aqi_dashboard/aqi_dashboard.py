@@ -24,7 +24,7 @@ alt.themes.enable("dark")
 # Tab navigation
 tab_selection = st.sidebar.radio(
     "Select View",
-    ["🇮🇳 AQI Dashboard", "🌫️ Pollutant Analysis"]
+    ["🇮🇳 AQI Dashboard", "📊 Pollutant Analysis", "📈 Predictive Trends"]
 )
 with st.sidebar.expander('Sources:', expanded=True):
         st.write('''
@@ -63,7 +63,7 @@ if tab_selection == "🇮🇳 AQI Dashboard":
 #######################
 # Tab 2: Pollutant Analysis
 
-elif tab_selection == "🌫️ Pollutant Analysis":
+elif tab_selection == "📊 Pollutant Analysis":
     st.subheader("📊 Pollutant-Level Analysis")
     pollutant_subtab = st.radio("Choose a sub-section", ["Overview", "Trends", "Comparisons"], horizontal=True)
 
@@ -74,4 +74,7 @@ elif tab_selection == "🌫️ Pollutant Analysis":
         pollutant_group_area_chart(df_aqi_agg_state)
     elif pollutant_subtab == "Comparisons":
         pollutant_heatmap(df_aqi_agg_state)
+elif tab_selection == "📈 Predictive Trends":
+    st.write("🧠 AI/ML-based Forecast  - Coming soon !!")
+
     
