@@ -30,63 +30,21 @@
 - [Click me](https://data-alchemist.streamlit.app/) to take the dashbaord for a spin 
 
 ```
-           +----------------------------+
-           |    1. Data Ingestion       |
-           |                            |
-           | Python script (hourly)     |
-           | scheduled via Dagster      |
-           | -> REST API                |
-           +-------------+--------------+
-                         |
-                         v
-           +-------------+--------------+
-           |   2. Landing Zone (Raw)    |
-           |                            |
-           | Snowflake Internal Stage   |
-           +-------------+--------------+
-                         |
-                         v
-           +-------------+--------------+
-           |     3. Transformation      |
-           |        (via DBT)           |
-           |   Scheduled via Dagster    |
-           +-------------+--------------+
-                         |
-     ┌───────────────────┴────────────────────┐
-     |                                        |
-     v                                        v
-+-------------------+          +---------------------------+
-|  raw_aqi_data     |          |  clean_aqi_data           |
-| (Staged raw data) |          | (Cleansed + enriched)     |
-+-------------------+          +---------------------------+
-                                       |
-                                       v
-                      +-------------------------------+
-                      |   Dimension & Fact Models     |
-                      |-------------------------------|
-                      |  dim_locations                |
-                      |  dim_measurement_time         |
-                      |  fact_aqi                     |
-                      +-------------------------------+
-                                       |
-                                       v
-             +---------------------------------------------+
-             |           Aggregate / Summary Tables        |
-             |---------------------------------------------|
-             |  daily_aqi_per_city                         |
-             |  monthly_aqi_state                          |
-             +---------------------------------------------+
 
-                         |
-                         v
-           +-------------+--------------+
-           | 4. Visualization Layer     |
-           |                            |
-           | Streamlit Dashboard        |
-           | - Pollutants tab           |
-           | - Trends / Comparison etc. |
-           +----------------------------+
 
++--------------------------+        +-------------------------------+        +------------------------------+        +----------------------------+
+|  1. Data Ingestion       |        |     2. Landing Zone (Raw)     |        |     3. Transformation        |       |  4. Visualization Layer    |
+|--------------------------|        |-------------------------------|        |------------------------------|        |----------------------------|
+| Python script (hourly)   | -----> | Snowflake Internal Stage      | -----> |       DBT models             | -----> | Streamlit Dashboard        |
+| Scheduled via Dagster    |        |                               |        | (hourly refresh via Dagster) |        | - AQI Dashboard            |
+| -> REST API              |        |                               |        | - raw_aqi_data               |        | - Pollutant Trends         |
++--------------------------+        +-------------------------------+        | - clean_aqi_data             |        +----------------------------+
+                                                                             |    - dim_locations           |
+                                                                             |    - dim_measurement_time    |
+                                                                             |    - fact_aqi                |
+                                                                             |    - daily_aqi_per_city      |
+                                                                             |    - monthly_aqi_state       |
+                                                                             +------------------------------+
 
 
 ```
