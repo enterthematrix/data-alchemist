@@ -553,3 +553,87 @@ def pollutants_trend(df):
         )
 
     st.altair_chart(line_chart, use_container_width=True)
+
+
+def pollutant_group_area_chart(df):
+    st.subheader("Pollutant Type Trends (Particulate vs Gaseous)")
+
+    granularity = st.radio("Select Granularity", ["Yearly", "Monthly"], key="pollutant_group_granularity")
+
+    all_states = df['state'].dropna().unique().tolist()
+    selected_state = st.selectbox("Select State", ["All"] + sorted(all_states), key="pollutant_group_state")
+
+    df_group = df.copy()
+    if selected_state != "All":
+        df_group = df_group[df_group["state"] == selected_state]
+
+    # Convert to datetime
+    if granularity == "Monthly":
+        df_group["time"] = pd.to_datetime(df_group[["year", "month"]].assign(day=1))
+    else:
+        df_group["time"] = pd.to_datetime(df_group["year"].astype(str), format="%Y")
+
+    # Group pollutants
+    df_group["Particulate Matter"] = df_group["pm25_avg"] + df_group["pm10_avg"]
+    df_group["Gaseous Pollutants"] = (
+        df_group["so2_avg"] + df_group["no2_avg"] + df_group["o3_avg"] + df_group["co_avg"] + df_group["nh3_avg"]
+    )
+
+    df_melted = df_group.melt(
+        id_vars=["time", "state"], 
+        value_vars=["Particulate Matter", "Gaseous Pollutants"],
+        var_name="Pollutant Type", 
+        value_name="Concentration"
+    )
+
+    area_chart = alt.Chart(df_melted).mark_area(opacity=0.7).encode(
+        x=alt.X(
+            "time:T",
+            title="Time",
+            timeUnit="year" if granularity == "Yearly" else "yearmonth",
+            axis=alt.Axis(format="%Y" if granularity == "Yearly" else "%b %Y")
+        ),
+        y=alt.Y("Concentration:Q", stack="normalize", title="Proportional Concentration"),
+        color=alt.Color("Pollutant Type:N", scale=alt.Scale(scheme="tableau20")),
+        tooltip=["time:T", "Pollutant Type:N", "Concentration:Q"]
+    ).properties(
+        width=750,
+        height=400,
+        title=f"{granularity} Composition of Particulate vs Gaseous Pollutants" +
+              (f" in {selected_state}" if selected_state != "All" else "")
+    )
+
+    st.altair_chart(area_chart, use_container_width=True)
+
+
+def pollutant_heatmap(df):
+    st.subheader("Heatmap of Pollutant Levels by State and Month")
+
+    pollutant_dropdown_map = {v: k for k, v in pollutant_name_map.items()}
+    selected_pollutant_label = st.selectbox("Select Pollutant", list(pollutant_dropdown_map.keys()))
+    selected_pollutant_col = pollutant_dropdown_map[selected_pollutant_label]
+
+    available_years = sorted(df["year"].dropna().unique())
+    selected_year = st.selectbox("Select Year", available_years)
+
+    # Filter and prep data
+    df_filtered = df[(df["year"] == selected_year) & df["state"].notna()]
+    df_filtered = df_filtered[["state", "month", selected_pollutant_col]].copy()
+
+    # Convert month number to name
+    df_filtered["month_name"] = df_filtered["month"].apply(lambda x: calendar.month_abbr[int(x)])
+    df_filtered["month_name"] = pd.Categorical(df_filtered["month_name"], categories=list(calendar.month_abbr)[1:], ordered=True)
+
+    # Build heatmap
+    heatmap = alt.Chart(df_filtered).mark_rect().encode(
+        x=alt.X("month_name:O", title="Month"),
+        y=alt.Y("state:N", title="State"),
+        color=alt.Color(f"{selected_pollutant_col}:Q", title=f"{selected_pollutant_label} Level", scale=alt.Scale(scheme="reds")),
+        tooltip=["state", "month_name", f"{selected_pollutant_col}:Q"]
+    ).properties(
+        width=700,
+        height=500,
+        title=f"{selected_pollutant_label} Levels Across States in {selected_year}"
+    )
+
+    st.altair_chart(heatmap, use_container_width=True)
