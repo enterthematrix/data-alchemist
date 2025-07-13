@@ -39,6 +39,23 @@ pollutant_cols = ['pm25_avg', 'pm10_avg', 'so2_avg', 'no2_avg', 'o3_avg', 'co_av
 # pollutant groups
 particulate = ["pm25_avg", "pm10_avg"]
 gaseous = ["so2_avg", "no2_avg", "o3_avg", "co_avg", "nh3_avg"]
+
+pollutant_group_map = {
+    "All": ["pm25_avg", "pm10_avg", "so2_avg", "no2_avg", "o3_avg", "co_avg", "nh3_avg"],
+    "Particulate Matter": ["pm25_avg", "pm10_avg"],
+    "Gaseous Pollutants": ["so2_avg", "no2_avg", "o3_avg", "co_avg", "nh3_avg"]
+}
+
+pollutant_name_map = {
+    "pm25_avg": "PM2.5",
+    "pm10_avg": "PM10",
+    "so2_avg": "SO₂",
+    "no2_avg": "NO₂",
+    "o3_avg": "O₃",
+    "co_avg": "CO",
+    "nh3_avg": "NH₃"
+}
+
 #######################
 # Data-prep
 
@@ -126,6 +143,55 @@ def show_pollutant_composition_chart(df,selected_year,selected_month,selected_mo
         )
 
         st.altair_chart(chart, use_container_width=True)
+
+
+def make_choropleth_india(df):
+    available_years = sorted(df['year'].unique())
+    selected_year = st.selectbox("Select Year", available_years, index=len(available_years)-1)
+
+    available_months = sorted(df[df['year'] == selected_year]['month'].dropna().unique(), reverse=True)
+    # Get month mappings
+    display_months, month_lookup = get_month_mappings(available_months)
+    display_months = ['All'] + display_months
+
+    selected_month_name = st.selectbox("Select Month", display_months)
+    selected_month = None if selected_month_name == 'All' else month_lookup[selected_month_name]
+
+    df_year = df[df['year'] == selected_year].copy()
+    if selected_month is not None:
+        df_year = df_year[df_year['month'] == selected_month]
+
+    title_suffix = f"{selected_year}" if selected_month == 'All' else f"{selected_month_name}-{selected_year}"
+    st.subheader(f"AQI Map: {title_suffix}")
+        
+    choropleth = px.choropleth(
+        df_year,
+        geojson=india_geo,
+        locations="state_for_map",
+        featureidkey="properties.ST_NM",
+        color="aqi_category",
+        color_discrete_map=aqi_colors,
+        hover_name="state",  
+        hover_data={
+            "aqi": True,
+            "aqi_category": True,
+            "state_for_map": False  
+        }
+        
+    )
+    
+    choropleth.update_geos(
+        fitbounds="locations", visible=False
+    )
+    choropleth.update_layout(
+        template='plotly_dark',
+        plot_bgcolor='rgba(0, 0, 0, 0)',
+        paper_bgcolor='rgba(0, 0, 0, 0)',
+        margin=dict(l=0, r=0, t=0, b=0),
+        height=700
+
+    )
+    st.plotly_chart(choropleth)
 
 
 def make_heatmap(df):
@@ -292,6 +358,7 @@ def aqi_distribution_pie_chart(df):
     )
     st.altair_chart(donut_chart, use_container_width=True)
 
+
 def aqi_leaderboard(df):
     available_years = sorted(df['year'].unique())
     selected_year = st.selectbox("Year ", available_years, index=len(available_years)-1)
@@ -332,6 +399,7 @@ def aqi_leaderboard(df):
                     )}
                 )
 
+
 def national_pollutant_averages(df, selected_year, selected_month):
     df_selected = df[df['year'] == selected_year].copy()
     if selected_month is not None:
@@ -354,6 +422,7 @@ def national_pollutant_averages(df, selected_year, selected_month):
 
     st.altair_chart(chart, use_container_width=True)
     
+
 def particulate_vs_gaseous(df, selected_year, selected_month):
     df_selected = df[df['year'] == selected_year].copy()
     if selected_month is not None:
@@ -378,6 +447,7 @@ def particulate_vs_gaseous(df, selected_year, selected_month):
 
     st.altair_chart(pie_chart, use_container_width=True)
 
+
 def prominent_pollutant_distribution(df,selected_year,selected_month,selected_month_name):
     df_selected = df[df['year'] == selected_year].copy()
     if selected_month is not None:
@@ -400,6 +470,7 @@ def prominent_pollutant_distribution(df,selected_year,selected_month,selected_mo
 
     st.plotly_chart(fig, use_container_width=True)
     
+
 def aqi_trends():
     col = st.columns((4, 4, 4), gap='medium')
     with col[0]:
@@ -408,6 +479,7 @@ def aqi_trends():
         aqi_distribution_pie_chart(df_aqi_agg_state)
     with col[2]:
         aqi_leaderboard(df_aqi_agg_state)
+
 
 def pollutants_overview():
     top_col = st.columns([14])[0]
@@ -433,51 +505,51 @@ def pollutants_overview():
         particulate_vs_gaseous(df_aqi_agg_state, selected_year, selected_month)
 
 
+def pollutants_trend(df):
+    df_agg = df.copy()
+    granularity = st.radio("Select Granularity", ["Yearly", "Monthly"])
 
-def make_choropleth_india(df):
-    available_years = sorted(df['year'].unique())
-    selected_year = st.selectbox("Select Year", available_years, index=len(available_years)-1)
+    all_states = df_agg['state'].dropna().unique().tolist()
+    selected_state = st.selectbox("Select State", ["All"] + sorted(all_states))
 
-    available_months = sorted(df[df['year'] == selected_year]['month'].dropna().unique(), reverse=True)
-    # Get month mappings
-    display_months, month_lookup = get_month_mappings(available_months)
-    display_months = ['All'] + display_months
+    # min_year, max_year = int(df_agg['year'].min()), int(df_agg['year'].max())
+    # selected_years = st.slider("Select Year Range", min_year, max_year, (min_year, max_year))
+    df_trend = df_agg.copy()
 
-    selected_month_name = st.selectbox("Select Month", display_months)
-    selected_month = None if selected_month_name == 'All' else month_lookup[selected_month_name]
+    if selected_state != "All":
+        df_trend = df_trend[df_trend['state'] == selected_state]
 
-    df_year = df[df['year'] == selected_year].copy()
-    if selected_month is not None:
-        df_year = df_year[df_year['month'] == selected_month]
+    # df_trend = df_trend[(df_trend['year'] >= selected_years[0]) & (df_trend['year'] <= selected_years[1])]
+    if df_trend.empty:
+        st.warning("No data available for the selected state and time range.")
+        st.stop()
 
-    title_suffix = f"{selected_year}" if selected_month == 'All' else f"{selected_month_name}-{selected_year}"
-    st.subheader(f"AQI Map: {title_suffix}")
-        
-    choropleth = px.choropleth(
-        df_year,
-        geojson=india_geo,
-        locations="state_for_map",
-        featureidkey="properties.ST_NM",
-        color="aqi_category",
-        color_discrete_map=aqi_colors,
-        hover_name="state",  
-        hover_data={
-            "aqi": True,
-            "aqi_category": True,
-            "state_for_map": False  
-        }
-        
-    )
-    
-    choropleth.update_geos(
-        fitbounds="locations", visible=False
-    )
-    choropleth.update_layout(
-        template='plotly_dark',
-        plot_bgcolor='rgba(0, 0, 0, 0)',
-        paper_bgcolor='rgba(0, 0, 0, 0)',
-        margin=dict(l=0, r=0, t=0, b=0),
-        height=700
+    if granularity == "Monthly":
+        df_trend["time"] = pd.to_datetime(df_trend[["year", "month"]].assign(day=1))
+        time_unit = None
+        time_format = "%b %Y"
+    else:
+        df_trend["time"] = pd.to_datetime(df_trend["year"].astype(str), format="%Y")
+        time_unit = "year"
+        time_format = "%Y"
 
-    )
-    st.plotly_chart(choropleth)
+    df_melted = df_trend.melt(id_vars=["time", "state"], value_vars=pollutant_cols,
+                            var_name="pollutant", value_name="concentration")
+
+    line_chart = alt.Chart(df_melted).mark_line().encode(
+    x=alt.X(
+        "time:T",
+        title="Time",
+        axis=alt.Axis(format=time_format),
+        **({"timeUnit": time_unit} if time_unit else {})
+    ),
+    y=alt.Y("concentration:Q", title="Avg Concentration", scale=alt.Scale(zero=False)),
+        color=alt.Color("pollutant:N", title="Pollutant"),
+        tooltip=["time:T", "pollutant:N", "concentration:Q"]
+        ).properties(
+            width=750,
+            height=400,
+            title=f"{granularity} Trends of Pollutants" + (f" in {selected_state}" if selected_state != "All" else "")
+        )
+
+    st.altair_chart(line_chart, use_container_width=True)

@@ -65,8 +65,10 @@ if tab_selection == "🇮🇳 AQI Dashboard":
 
 elif tab_selection == "🌫️ Pollutant Analysis":
     st.subheader("Pollutant-Level Analysis")
-    pollutant_subtab = st.radio("Choose a sub-section", ["Overview", "Trends", "Comparisons", "Maps", "Anomalies"], horizontal=True)
+    pollutant_subtab = st.radio("Choose a sub-section", ["Overview", "Trends", "Comparisons"], horizontal=True)
 
     if pollutant_subtab == "Overview":
         pollutants_overview()
+    elif pollutant_subtab == "Trends":
+        pollutants_trend(df_aqi_agg_state)
     
