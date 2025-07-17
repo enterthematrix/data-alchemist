@@ -10,9 +10,7 @@
 
 #### Scheduled using Dagster
 
-- Staging in Snowflake
-
-- Data written to Snowflake internal stage
+- Raw data staged into Snowflake's internal stage via above Python script 
 
 - Transformations using DBT
 <img src="../../images/AIRlytics_DBT_model.png" align="center" />
@@ -48,3 +46,6 @@
 
 
 ```
+
+#### Schema
+<img src="../../images/airlytics_schema.png" align="center" />
