@@ -1,0 +1,66 @@
+# Setup: Snowflake user/role/schema creation and data load
+
+## Snowflake setup
+
+```sql {#snowflake_setup}
+-- Use an admin role
+USE ROLE ACCOUNTADMIN;
+
+-- Create the `transform` role
+CREATE ROLE IF NOT EXISTS TRANSFORM;
+GRANT ROLE TRANSFORM TO ROLE ACCOUNTADMIN;
+
+-- Create the default warehouse if necessary
+CREATE WAREHOUSE IF NOT EXISTS ADHOC_WH;
+GRANT OPERATE ON WAREHOUSE ADHOC_WH TO ROLE TRANSFORM;
+
+-- Create the `dbt` user and assign to role
+CREATE USER IF NOT EXISTS dbt
+  PASSWORD='dbt123'
+  LOGIN_NAME='dbt'
+  MUST_CHANGE_PASSWORD=FALSE
+  DEFAULT_WAREHOUSE='ADHOC_WH'
+  DEFAULT_ROLE=TRANSFORM
+  DEFAULT_NAMESPACE='AQI.DEV'
+  COMMENT='DBT user used for data transformation';
+ALTER USER dbt SET TYPE = LEGACY_SERVICE;
+GRANT ROLE TRANSFORM to USER dbt;
+
+-- Create our database and schemas
+CREATE DATABASE IF NOT EXISTS DATAFLIX;
+CREATE SCHEMA IF NOT EXISTS DATAFLIX.DEV;
+
+- Set up the defaults
+USE WAREHOUSE ADHOC_WH;
+USE DATABASE DATAFLIX;
+USE SCHEMA DEV;
+
+-- create an internal stage and enable directory service
+CREATE STAGE IF NOT EXISTS imdb_raw_data
+directory = ( enable = true)
+comment = 'Internal Stage to store raw imdb data';
+
+
+-- create file format to process the TSV file
+CREATE OR REPLACE FILE FORMAT dataflix_tsv_format
+  TYPE = 'CSV'
+  FIELD_DELIMITER = '\t'
+  SKIP_HEADER = 1
+  NULL_IF = ('\\N');
+
+
+SHOW STAGES;
+SHOW FILE FORMATS;
+
+-- list files under the stage
+LIST @imdb_raw_data;
+
+-- Set up permissions to role `transform`
+GRANT ALL ON WAREHOUSE ADHOC_WH TO ROLE TRANSFORM; 
+GRANT ALL ON DATABASE DATAFLIX to ROLE TRANSFORM;
+GRANT ALL ON ALL SCHEMAS IN DATABASE DATAFLIX to ROLE TRANSFORM;
+GRANT ALL ON FUTURE SCHEMAS IN DATABASE DATAFLIX to ROLE TRANSFORM;
+GRANT ALL ON ALL TABLES IN SCHEMA DATAFLIX.DEV to ROLE TRANSFORM;
+GRANT ALL ON FUTURE TABLES IN SCHEMA DATAFLIX.DEV to ROLE TRANSFORM;
+GRANT WRITE, READ ON STAGE DATAFLIX.DEV.IMDB_RAW_DATA TO ROLE TRANSFORM;
+GRANT USAGE ON FILE FORMAT DATAFLIX.DEV.DATAFLIX_TSV_FORMAT TO ROLE TRANSFORM;
