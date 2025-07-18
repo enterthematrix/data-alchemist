@@ -10,7 +10,7 @@ with staged as (
         $4::string as category,
         $5::string as job,
         $6::string as characters
-    FROM @DEV.IMDB_RAW_DATA/{{ var('title_principals') }} (file_format => dataflix_tsv_format)
+    FROM@{{ var('raw_schema') }}.{{ var('raw_stage') }}/{{ var('title_principals') }} (file_format => dataflix_tsv_format)
 )
 
-SELECT * FROM staged;
+SELECT * FROM staged

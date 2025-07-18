@@ -12,7 +12,7 @@ WITH staged AS (
         $6::STRING AS types,
         $7::STRING AS attributes,
         $8::BOOLEAN AS is_original_title
-    FROM @DEV.IMDB_RAW_DATA/{{ var('title_akas') }} (file_format => dataflix_tsv_format)
+    FROM @{{ var('raw_schema') }}.{{ var('raw_stage') }}/{{ var('title_akas') }} (file_format => dataflix_tsv_format)
 )
 
-SELECT * FROM staged;
+SELECT * FROM staged

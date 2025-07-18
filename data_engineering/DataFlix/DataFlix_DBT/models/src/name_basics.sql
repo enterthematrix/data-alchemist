@@ -11,6 +11,6 @@ with staged as (
         $4::int as death_year,
         $5::string as primary_profession,
         $6::string as known_for_titles
-    FROM @DEV.IMDB_RAW_DATA/{{ var('name_basics') }} (file_format => dataflix_tsv_format)
+    FROM @{{ var('raw_schema') }}.{{ var('raw_stage') }}/{{ var('name_basics') }} (file_format => dataflix_tsv_format)
 )
-select * from staged;
+select * from staged

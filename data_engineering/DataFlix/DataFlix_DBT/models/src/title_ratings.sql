@@ -7,7 +7,7 @@ WITH staged AS (
         $1::STRING AS tconst,
         $2::FLOAT AS average_rating,
         $3::NUMBER AS num_votes
-    FROM @DEV.IMDB_RAW_DATA/{{ var('title_ratings') }} (file_format => dataflix_tsv_format)
+    FROM @{{ var('raw_schema') }}.{{ var('raw_stage') }}/{{ var('title_ratings') }} (file_format => dataflix_tsv_format)
 )
 
-SELECT * FROM staged;
+SELECT * FROM staged

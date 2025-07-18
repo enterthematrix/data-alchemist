@@ -13,7 +13,7 @@ WITH staged AS (
         $7::NUMBER AS end_year,
         $8::NUMBER AS runtime_minutes,
         $9::STRING AS genres
-    FROM @DEV.IMDB_RAW_DATA/{{ var('title_basics') }} (file_format => dataflix_tsv_format)
+    FROM @{{ var('raw_schema') }}.{{ var('raw_stage') }}/{{ var('title_basics') }} (file_format => dataflix_tsv_format)
 )
 
-SELECT * FROM staged;
+SELECT * FROM staged
