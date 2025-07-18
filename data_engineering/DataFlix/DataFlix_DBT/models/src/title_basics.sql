@@ -1,6 +1,5 @@
 {{ config(
-    unique_key='tconst' 
-    
+    materialized='table'
 ) }}
 
 WITH staged AS (
@@ -14,6 +13,7 @@ WITH staged AS (
         $7::NUMBER AS end_year,
         $8::NUMBER AS runtime_minutes,
         $9::STRING AS genres
-    FROM @DEV.IMDB_RAW_DATA/title.basics.tsv.gz (file_format => dataflix_tsv_format)
+    FROM @DEV.IMDB_RAW_DATA/{{ var('title_basics') }} (file_format => dataflix_tsv_format)
 )
+
 SELECT * FROM staged;

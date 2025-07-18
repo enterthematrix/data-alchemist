@@ -30,7 +30,23 @@ clean-targets:         # directories to be removed by `dbt clean`
 # directory as views. These settings can be overridden in the individual model
 # files using the `{{ config(...) }}` macro.
 models:
-  DataFlix_DBT:
-    # Config indicated by + and applies to all files under models/example/
-    example:
-      +materialized: view
+   DataFlix_DBT:
+    +materialized: table
+    src:
+      +schema: raw
+    stage:
+      +schema: staging
+    mart:
+      +schema: mart
+vars:
+  raw_schema: raw
+  stage_schema: staging
+  mart_schema: mart
+  raw_stage: IMDB_RAW_DATA
+  title_episode: title.episode.tsv.gz 
+  title_akas: title.akas.tsv.gz
+  title_ratings: title.ratings.tsv.gz
+  title_crew: title.crew.tsv.gz
+  title_basics: title.basics.tsv.gz
+  title_principals: title.principals.tsv.gz
+  name_basics: name.basics.tsv.gz
