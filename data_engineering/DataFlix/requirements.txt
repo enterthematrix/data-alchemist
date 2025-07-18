@@ -8,3 +8,4 @@ snowflake-sqlalchemy==1.7.5
 pandas==2.3.0
 altair==5.5.0
 plotly==6.2.0
+pyarrow==18.1.0
