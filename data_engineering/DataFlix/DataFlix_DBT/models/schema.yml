@@ -2,20 +2,27 @@
 version: 2
 
 models:
-  - name: my_first_dbt_model
-    description: "A starter dbt model"
+  - name: fact_titles
+    description: >
+      Denormalized fact table combining IMDb title data with ratings and 
+      crew(director/writer) information.
     columns:
-      - name: id
-        description: "The primary key for this table"
+      - name: title_id
+        description: Unique identifier for the title
         tests:
-          - unique
           - not_null
-
-  - name: my_second_dbt_model
-    description: "A starter dbt model"
-    columns:
-      - name: id
-        description: "The primary key for this table"
-        tests:
           - unique
-          - not_null
+      - name: primary_title
+        description: Main title of the content
+      - name: is_adult
+        description: Indicates if the content is adult
+      - name: start_year
+        description: Year when the title was first released
+      - name: average_rating
+        description: Average IMDb rating
+      - name: num_votes
+        description: Number of IMDb votes
+      - name: director_names
+        description: Comma-separated list of director names
+      - name: writer_names
+        description: Comma-separated list of writer names
