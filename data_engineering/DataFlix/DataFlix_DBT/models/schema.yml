@@ -1,28 +1,319 @@
-
 version: 2
 
 models:
-  - name: fact_titles
-    description: >
-      Denormalized fact table combining IMDb title data with ratings and 
-      crew(director/writer) information.
+  # source models
+  - name: src_name_basics
+    description: Raw source data of names, including personal details and professions.
+    columns:
+      - name: nconst
+        description: Unique identifier for the person (e.g., nm0000001).
+      - name: primary_name
+        description: Person’s primary name.
+      - name: birth_year
+        description: Year of birth (nullable).
+      - name: death_year
+        description: Year of death (nullable).
+      - name: primary_profession
+        description: Comma-separated list of professions.
+      - name: known_for_titles
+        description: Comma-separated list of known title IDs.
+
+  - name: src_title_basics
+    description: Raw source data of titles including metadata like type, runtime, and genres.
+    columns:
+      - name: tconst
+        description: Unique identifier for the title (e.g., tt0000001).
+      - name: title_type
+        description: Type of title (e.g., movie, tvSeries).
+      - name: primary_title
+        description: Official title name.
+      - name: original_title
+        description: Original/working title.
+      - name: is_adult
+        description: 1 if title is adult content, 0 otherwise.
+      - name: start_year
+        description: Start year of release.
+      - name: end_year
+        description: End year if applicable (e.g., for series).
+      - name: runtime_minutes
+        description: Duration of the title in minutes.
+      - name: genres
+        description: Comma-separated list of genres.
+
+  - name: src_title_akas
+    description: Alternate names and localized titles for IMDB entries.
     columns:
       - name: title_id
-        description: Unique identifier for the title
-        tests:
-          - not_null
-          - unique
-      - name: primary_title
-        description: Main title of the content
-      - name: is_adult
-        description: Indicates if the content is adult
-      - name: start_year
-        description: Year when the title was first released
+        description: Foreign key to the title (tconst).
+      - name: ordering
+        description: Ordering/index of the alternate title.
+      - name: title
+        description: The localized or alternate title name.
+      - name: region
+        description: Region/country for this alternate title.
+      - name: language
+        description: Language of the title.
+      - name: types
+        description: Type of alternate title (e.g., original, promotional).
+      - name: attributes
+        description: Additional attributes (nullable).
+      - name: is_original_title
+        description: Whether this is the original title (1 or 0).
+
+  - name: src_title_crew
+    description: Director and writer information for each title.
+    columns:
+      - name: tconst
+        description: Unique identifier for the title.
+      - name: directors
+        description: Comma-separated list of director IDs (nconst).
+      - name: writers
+        description: Comma-separated list of writer IDs (nconst).
+
+  - name: src_title_episode
+    description: Episode information linking episodes to parent series.
+    columns:
+      - name: tconst
+        description: Episode title ID.
+      - name: parent_tconst
+        description: Parent series title ID.
+      - name: season_number
+        description: Season number.
+      - name: episode_number
+        description: Episode number within the season.
+
+  - name: src_title_principals
+    description: Principal cast and crew for titles.
+    columns:
+      - name: tconst
+        description: Title ID.
+      - name: ordering
+        description: Ordering/index in credits.
+      - name: nconst
+        description: Person ID.
+      - name: category
+        description: Category of job (e.g., actor, director).
+      - name: job
+        description: Job title (e.g., producer, writer).
+      - name: characters
+        description: Characters portrayed (nullable).
+
+  - name: src_title_ratings
+    description: Rating data for each title including average score and vote count.
+    columns:
+      - name: tconst
+        description: Title ID.
       - name: average_rating
-        description: Average IMDb rating
+        description: Average rating (0–10 scale).
       - name: num_votes
-        description: Number of IMDb votes
-      - name: director_names
-        description: Comma-separated list of director names
-      - name: writer_names
-        description: Comma-separated list of writer names
+        description: Total number of votes.
+
+
+  # staging models
+  - name: dim_person
+    description: Dimension table for people involved in titles (e.g., actors, directors).
+    columns:
+      - name: person_id
+        description: Unique identifier for the person.
+      - name: primary_name
+        description: Person's primary name.
+      - name: birth_year
+        description: Year of birth (nullable).
+      - name: death_year
+        description: Year of death (nullable).
+      - name: primary_profession
+        description: Comma-separated list of professions.
+      - name: known_for_titles
+        description: Comma-separated list of title IDs this person is known for.
+
+  - name: dim_title
+    description: Dimension table for titles (movies, series, etc.).
+    columns:
+      - name: title_id
+        description: Unique identifier for the title.
+      - name: title_type
+        description: Type of the title (e.g., movie, tvSeries).
+      - name: primary_title
+        description: Main title name.
+      - name: original_title
+        description: Original title name.
+      - name: is_adult
+        description: Indicates if the content is for adults.
+      - name: start_year
+        description: Year the title was released.
+      - name: end_year
+        description: Year the title ended (for series).
+      - name: runtime_minutes
+        description: Runtime of the title in minutes.
+      - name: genres
+        description: Comma-separated list of genres.
+
+  - name: fact_ratings
+    description: Fact table containing average ratings and vote counts for titles.
+    columns:
+      - name: title_id
+        description: Title ID this rating is associated with.
+      - name: average_rating
+        description: Average user rating (0–10).
+      - name: num_votes
+        description: Number of user votes.
+
+  - name: fact_title_participation
+    description: Fact table linking titles to people and their roles.
+    columns:
+      - name: title_id
+        description: Title ID in which the person participated.
+      - name: person_id
+        description: Person ID who participated.
+      - name: ordering
+        description: Order of appearance/credit.
+      - name: category
+        description: Category of role (e.g., actor, director).
+      - name: job
+        description: Specific job description (nullable).
+      - name: characters
+        description: Character names portrayed (nullable).
+
+  - name: fact_titles
+    description: Fact table that expands on the title dimension with ratings and genre info.
+    columns:
+      - name: title_id
+        description: Unique identifier for the title.
+      - name: title_type
+        description: Type of title.
+      - name: genres
+        description: Genres associated with the title.
+      - name: average_rating
+        description: Average user rating.
+      - name: num_votes
+        description: Number of user votes.
+
+  # mart models
+  - name: mart_genre_trends
+    description: >
+      Aggregates yearly average ratings and vote counts by genre to visualize
+      genre performance trends over time.
+    columns:
+      - name: genre
+        description: "Genre of the movie"
+      - name: year
+        description: "Release year of the title"
+      - name: avg_rating
+        description: "Average IMDb rating for the genre in that year"
+      - name: total_votes
+        description: "Total number of votes received by movies of that genre and year"
+
+  - name: mart_hidden_gems_movies
+    description: >
+      Highlights high-rated movies with low vote counts — typically underrated
+      or lesser-known films worth discovering.
+    columns:
+      - name: title_id
+        description: "Unique identifier of the movie"
+      - name: primary_title
+        description: "Title of the movie"
+      - name: average_rating
+        description: "Average IMDb rating"
+      - name: num_votes
+        description: "Number of votes received"
+      - name: genres
+        description: "Genres associated with the movie"
+      - name: start_year
+        description: "Release year"
+
+  - name: mart_person_summary
+    description: >
+      Summary of individuals (actors, actresses, directors) with aggregated stats
+      like average rating, number of titles, and total votes.
+    columns:
+      - name: person_id
+        description: "Unique identifier for the person"
+      - name: person_name
+        description: "Full name"
+      - name: role
+        description: "Role of the person (actor, actress, director)"
+      - name: num_titles
+        description: "Number of movies participated in"
+      - name: avg_rating
+        description: "Average rating across those titles"
+      - name: total_votes
+        description: "Total votes across those titles"
+      - name: top_titles
+        description: "Comma-separated list of top-rated titles"
+
+  - name: mart_title_summary
+    description: >
+      Enriched summary of movies with key attributes like title, genre, rating,
+      and number of votes.
+    columns:
+      - name: title_id
+        description: "Unique identifier of the movie"
+      - name: primary_title
+        description: "Title of the movie"
+      - name: average_rating
+        description: "Average IMDb rating"
+      - name: num_votes
+        description: "Number of votes received"
+      - name: genres
+        description: "Genres associated with the movie"
+      - name: start_year
+        description: "Release year"
+      - name: title_type
+        description: "Type of the title (movie, short, etc.)"
+
+  - name: mart_top_movie_actors
+    description: >
+      Highlights top actors and actresses based on their average rating,
+      popularity (votes), and number of movies they've acted in.
+    columns:
+      - name: person_id
+        description: "Unique identifier for the actor/actress"
+      - name: person_name
+        description: "Full name"
+      - name: role
+        description: "Role (actor or actress)"
+      - name: num_titles
+        description: "Number of movies acted in"
+      - name: avg_rating
+        description: "Average rating of their movies"
+      - name: total_votes
+        description: "Total votes from their movies"
+      - name: top_titles
+        description: "Comma-separated list of top-rated titles"
+
+  - name: mart_top_movie_directors
+    description: >
+      Identifies top directors with high-rated and popular movies.
+    columns:
+      - name: person_id
+        description: "Unique identifier for the director"
+      - name: person_name
+        description: "Director's full name"
+      - name: num_titles
+        description: "Number of movies directed"
+      - name: avg_rating
+        description: "Average rating of directed movies"
+      - name: total_votes
+        description: "Total votes from directed movies"
+      - name: top_titles
+        description: "Comma-separated list of top-rated directed titles"
+
+  - name: mart_top_movie_directors_genre
+    description: >
+      Ranks directors within each genre based on their average rating, number of titles, and votes.
+    columns:
+      - name: person_id
+        description: "Unique identifier for the director"
+      - name: person_name
+        description: "Director's full name"
+      - name: genre
+        description: "Movie genre"
+      - name: num_titles
+        description: "Number of titles in that genre"
+      - name: avg_rating
+        description: "Average rating in that genre"
+      - name: total_votes
+        description: "Total votes in that genre"
+      - name: rank
+        description: "Dense rank of the director within the genre based on performance"
+
