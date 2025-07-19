@@ -1,15 +1,23 @@
+{{ config(
+    materialized='incremental'
+) }}
+
 with titles as (
     select
-        t.tconst as title_id,
-        t.primary_title,
-        t.original_title,
-        t.title_type,
-        t.is_adult,
-        t.start_year,
-        t.end_year,
-        t.runtime_minutes,
-        t.genres
+        tconst as title_id,
+        primary_title,
+        original_title,
+        title_type,
+        is_adult,
+        start_year,
+        end_year,
+        runtime_minutes,
+        genres,
+        ingested_at
     from {{ ref('title_basics') }} t
+    {% if is_incremental() %}
+      where ingested_at > (select max(ingested_at) from {{ this }})
+    {% endif %}
 ),
 
 ratings as (
@@ -17,7 +25,7 @@ ratings as (
         tconst as title_id,
         average_rating,
         num_votes
-    from {{ ref('title_ratings') }}
+    from {{ ref('title_ratings') }} 
 ),
 
 crew as (
@@ -25,7 +33,8 @@ crew as (
         tconst as title_id,
         director_ids as directors,
         writer_ids as writers
-    from {{ ref('title_crew') }}
+    from {{ ref('title_crew') }} 
+
 ),
 
 director_names as (
@@ -52,8 +61,8 @@ writer_names as (
         join {{ ref('name_basics') }} n
             on n.nconst = w.value
     group by c.title_id
-)
-
+),
+enriched_titles as (
 select
     t.title_id,
     t.primary_title,
@@ -67,8 +76,16 @@ select
     r.average_rating,
     r.num_votes,
     d.director_names,
-    w.writer_names
+    w.writer_names,
+    t.ingested_at,
+    current_timestamp() as load_ts
 from titles t
 left join ratings r on t.title_id = r.title_id
 left join director_names d on t.title_id = d.title_id
 left join writer_names w on t.title_id = w.title_id
+)
+select * from enriched_titles
+{% if is_incremental() %}
+where ingested_at > (select max(load_ts) from {{ this }})
+{% endif %}
+
