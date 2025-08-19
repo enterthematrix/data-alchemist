@@ -21,17 +21,17 @@ logging.basicConfig(
     ]
 )
 
-api_url = 'https://api.data.gov.in/resource/3b01bcb8-0b14-4abf-b6f2-c1bfd384ba69'
-
 # DBT profiles file
-profile_path = os.path.expanduser("~/.dbt/profiles.yml")
+DBT_PROFILES_DIR = os.path.expanduser("~/.dbt/profiles.yml")
 
 # Load the YAML file
-with open(profile_path, 'r') as f:
+with open(DBT_PROFILES_DIR, 'r') as f:
     profiles = yaml.safe_load(f)
 
-# Access account and password from the 'imdb' profile
-imdb_credentials = profiles['imdb']['outputs']['dev']
+DBT_PROFILES_NAME = 'dataflix'
+DBT_PROFILE_SCHEMA = "dataflix"
+# Access account and password from the 'dataflix' profile
+imdb_credentials = profiles[DBT_PROFILES_NAME]['outputs'][DBT_PROFILE_SCHEMA]
 
 SNOWFLAKE_ACCOUNT = imdb_credentials['account']
 SNOWFLAKE_USER = imdb_credentials['user']
