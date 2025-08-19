@@ -6,7 +6,7 @@ name: 'DataFlix_DBT'
 version: '1.0.0'
 
 # This setting configures which "profile" dbt uses for this project.
-profile: 'DataFlix_DBT'
+profile: 'dataflix'
 
 # These configurations specify where dbt should look for different types of files.
 # The `model-paths` config, for example, states that models in this project can be
@@ -33,15 +33,15 @@ models:
    DataFlix_DBT:
     +materialized: table
     src:
-      +schema: raw
+      +schema: DATAFLIX
     stage:
-      +schema: staging
+      +schema: DATAFLIX
     mart:
-      +schema: mart
+      +schema: DATAFLIX
 vars:
-  raw_schema: raw
-  stage_schema: staging
-  mart_schema: mart
+  raw_schema: DATAFLIX
+  stage_schema: DATAFLIX
+  mart_schema: DATAFLIX
   raw_stage: IMDB_RAW_DATA
   title_episode: title.episode.tsv.gz 
   title_akas: title.akas.tsv.gz
