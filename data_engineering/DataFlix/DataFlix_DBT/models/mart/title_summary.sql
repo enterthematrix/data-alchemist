@@ -5,7 +5,6 @@
 -- It also includes a timestamp for when the data was loaded. 
 #}
 
-top category (actor/director/...)
 {{ config(
     materialized='incremental',
     unique_key='title_id',
